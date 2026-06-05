@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🍞 Gestionale Ordini – Forno Cloud</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#fdf8f3;--surface:#fff;--border:#e8ddd0;--text:#2d1f0e;--muted:#8a6f55;--primary:#c0622a;--ph:#a3501f;--pl:#fae8dc;--accent:#e8a44a;--al:#fdf3e0;--green:#2d8a5a;--gl:#d8f2e6;--blue:#2a6cc0;--bl:#dceafa;--red:#c03030;--rl:#fde8e8;--purple:#7a3fb5;--pul:#eedff8;--r:10px;--sh:0 2px 8px rgba(45,31,14,.10);--shl:0 6px 24px rgba(45,31,14,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* SETUP */
+.setup-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;overflow-y:auto;padding:20px}
+.setup-card{background:var(--surface);border-radius:16px;padding:36px 40px;max-width:640px;width:100%;box-shadow:var(--shl);border:1px solid var(--border)}
+.setup-logo{font-size:48px;text-align:center;margin-bottom:10px}
+.setup-card h1{font-size:22px;text-align:center;color:var(--primary);margin-bottom:8px}
+.setup-desc{text-align:center;color:var(--muted);font-size:14px;margin-bottom:26px;line-height:1.6}
+.setup-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+.setup-step{display:flex;gap:14px;align-items:flex-start;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.step-n{min-width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.step-body strong{font-size:14px;display:block;margin-bottom:4px}
+.step-body p{font-size:13px;color:var(--muted);line-height:1.55}
+.step-body a{color:var(--primary);font-weight:600}
+.step-body code{background:#f0e8de;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.cfg-field{display:flex;flex-direction:column;gap:4px}
+.cfg-field.full{grid-column:1/-1}
+.cfg-field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.cfg-field input{padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:monospace;color:var(--text);background:var(--bg);outline:none;transition:border .18s;width:100%}
+.cfg-field input:focus{border-color:var(--primary);background:#fff}
+.cfg-field input.err{border-color:var(--red)}
+.btn-setup{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;margin-top:14px}
+.btn-setup:hover{background:var(--ph)}
+.setup-err{color:var(--red);font-size:13px;margin-top:8px;text-align:center;display:none}
+.rules-box{background:#1e1e2e;border-radius:8px;padding:12px 14px;font-family:monospace;font-size:12px;color:#cdd6f4;margin-top:8px;white-space:pre;overflow-x:auto}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(253,248,243,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:400}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--muted);font-weight:500}
+
+/* TOPBAR */
+.topbar{background:var(--primary);color:#fff;display:flex;align-items:center;gap:12px;padding:0 20px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.topbar-logo{font-size:20px;font-weight:700;display:flex;align-items:center;gap:7px}
+.topbar-nav{display:flex;gap:4px;margin-left:12px}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,.8);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all .18s}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,.18);color:#fff}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn-new{background:#fff;color:var(--primary);border:none;padding:7px 15px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
+.btn-new:hover{background:var(--pl)}
+.conn-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;cursor:help;transition:background .4s;box-shadow:0 0 0 2px rgba(255,255,255,.3);margin-left:4px}
+.conn-dot.offline{background:var(--accent)}
+.settings-btn{background:none;border:none;color:rgba(255,255,255,.75);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;transition:all .18s}
+.settings-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+
+/* BACKUP BANNER */
+.backup-banner{background:var(--al);border-bottom:2px solid var(--accent);padding:10px 22px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500}
+.backup-banner .bb-text{flex:1}
+.backup-banner .bb-btn{background:var(--accent);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.backup-banner .bb-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:0 4px}
+
+/* MAIN */
+.page{display:none;padding:26px 22px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:26px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .18s}
+.stat-card:hover{box-shadow:var(--shl)}
+.stat-card .label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.stat-card .value{font-size:30px;font-weight:700}
+.stat-card .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.stat-card.total .value{color:var(--primary)}
+.stat-card.ricevuto .value{color:var(--blue)}
+.stat-card.preparazione .value{color:var(--accent)}
+.stat-card.pronto .value{color:var(--green)}
+.stat-card.consegnato .value{color:var(--muted)}
+
+.section-title{font-size:15px;font-weight:700;margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.section-title .badge{background:var(--pl);color:var(--primary);font-size:12px;padding:2px 8px;border-radius:20px;font-weight:600}
+.alert-box{background:var(--al);border:1.5px solid var(--accent);border-radius:var(--r);padding:13px 16px;margin-bottom:22px;display:flex;align-items:flex-start;gap:10px}
+.alert-box .text{font-size:14px;line-height:1.5}
+
+/* MINI LIST */
+.order-mini-list{display:grid;gap:9px}
+.order-mini{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:13px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .18s}
+.order-mini:hover{box-shadow:var(--shl)}
+.order-mini .orario{font-size:19px;font-weight:700;color:var(--primary);min-width:52px}
+.order-mini .info{flex:1}
+.order-mini .cliente-name{font-weight:600;font-size:14px}
+.order-mini .prodotti-short{font-size:12px;color:var(--muted);margin-top:2px}
+.order-mini .right{text-align:right;flex-shrink:0}
+.order-mini .totale{font-weight:700;font-size:14px}
+.order-mini .tipo-badge{font-size:11px;color:var(--muted);margin-top:2px}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-state .icon{font-size:44px;margin-bottom:12px}
+
+/* FILTERS */
+.filters-bar{display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filters-bar input,.filters-bar select{padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:14px;background:var(--surface);color:var(--text);outline:none;transition:border .18s}
+.filters-bar input:focus,.filters-bar select:focus{border-color:var(--primary)}
+.filters-bar input{min-width:190px}
+.sort-btn{background:var(--surface);border:1px solid var(--border);padding:8px 11px;border-radius:7px;font-size:13px;cursor:pointer;color:var(--muted);transition:all .18s}
+.sort-btn:hover,.sort-btn.active{border-color:var(--primary);color:var(--primary);background:var(--pl)}
+
+/* TABLE */
+.orders-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+thead{background:#f7f0e8}
+th{padding:10px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 13px;font-size:14px;border-bottom:1px solid #f3ece3;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
+
+/* BADGES */
+.badge-stato{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-stato.ricevuto{background:var(--bl);color:var(--blue)}
+.badge-stato.in_preparazione{background:var(--al);color:#b07a10}
+.badge-stato.pronto{background:var(--gl);color:var(--green)}
+.badge-stato.consegnato{background:#f0f0f0;color:#666}
+.badge-stato.annullato{background:var(--rl);color:var(--red)}
+.badge-cat{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:12px;font-weight:600}
+.badge-cat.pane{background:#fdecd5;color:#a05820}
+.badge-cat.pasticceria{background:#fde8f0;color:#b02860}
+.badge-cat.pizza{background:#fdf5d5;color:#8a7010}
+.badge-cat.catering{background:var(--pul);color:var(--purple)}
+.badge-cat.altro{background:#f0f0f0;color:#555}
+
+/* EXPORT TOOLBAR */
+.export-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 0;margin-bottom:13px;border-bottom:1px solid var(--border)}
+.btn-tool{background:var(--surface);border:1px solid var(--border);padding:7px 13px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:6px;transition:all .18s}
+.btn-tool:hover{border-color:var(--primary);color:var(--primary);background:var(--pl)}
+.btn-tool.green{border-color:var(--green);color:var(--green)}
+.btn-tool.green:hover{background:var(--gl)}
+.btn-tool.blue{border-color:var(--blue);color:var(--blue)}
+.btn-tool.blue:hover{background:var(--bl)}
+.btn-tool.orange{border-color:var(--accent);color:#8a5c00}
+.btn-tool.orange:hover{background:var(--al)}
+
+/* FORM */
+.form-page{max-width:820px}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh)}
+.form-card-title{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--primary);display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr}
+.form-row.single{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-group input,.form-group select,.form-group textarea{padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border .18s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);background:#fff}
+.form-group textarea{resize:vertical;min-height:68px}
+.prodotti-list{display:flex;flex-direction:column;gap:9px}
+.prodotto-row{display:grid;grid-template-columns:130px 1fr 75px 95px 85px 34px;gap:7px;align-items:center;background:#fdf8f3;padding:9px 11px;border-radius:8px;border:1px solid var(--border)}
+.prodotto-row select,.prodotto-row input{padding:6px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border .18s;width:100%;font-family:inherit}
+.prodotto-row select:focus,.prodotto-row input:focus{border-color:var(--primary)}
+.btn-del-prod{background:var(--rl);color:var(--red);border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0}
+.btn-del-prod:hover{background:#f8c0c0}
+.btn-add-prod{background:var(--pl);color:var(--primary);border:1.5px dashed var(--primary);border-radius:7px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:5px;transition:all .18s}
+.btn-add-prod:hover{background:var(--primary);color:#fff}
+.prodotto-labels{display:grid;grid-template-columns:130px 1fr 75px 95px 85px 34px;gap:7px;padding:0 11px;margin-bottom:4px}
+.prodotto-labels span{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.totale-preview{text-align:right;font-size:14px;margin-top:9px;color:var(--muted)}
+.totale-preview strong{color:var(--primary);font-size:17px}
+.pagamento-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+.saldo-info{font-size:14px;font-weight:700;margin-top:8px}
+.stato-selector{display:flex;gap:8px;flex-wrap:wrap}
+.stato-opt{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;gap:5px}
+.stato-opt:hover{border-color:var(--primary)}
+.stato-opt.selected.ricevuto{background:var(--bl);border-color:var(--blue);color:var(--blue)}
+.stato-opt.selected.in_preparazione{background:var(--al);border-color:var(--accent);color:#b07a10}
+.stato-opt.selected.pronto{background:var(--gl);border-color:var(--green);color:var(--green)}
+.stato-opt.selected.consegnato{background:#f0f0f0;border-color:#888;color:#444}
+.stato-opt.selected.annullato{background:var(--rl);border-color:var(--red);color:var(--red)}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.btn{padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--ph)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-danger{background:var(--rl);color:var(--red);border:1px solid var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+
+/* DETTAGLIO */
+.detail-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.detail-id{font-size:13px;color:var(--muted);margin-bottom:4px}
+.detail-cliente{font-size:23px;font-weight:700}
+.detail-actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:13px;margin-bottom:18px}
+.info-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+.info-block .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:5px}
+.info-block .value{font-size:14px;font-weight:600}
+.info-block .value.big{font-size:19px;color:var(--primary)}
+.prodotti-detail-table{width:100%;border-collapse:collapse}
+.prodotti-detail-table th{background:#f7f0e8;padding:9px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.prodotti-detail-table td{padding:10px 13px;font-size:14px;border-bottom:1px solid #f3ece3}
+.prodotti-detail-table tfoot td{font-weight:700;padding:11px 13px;background:#fdf5ee}
+.step-dot{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--surface);cursor:pointer;transition:all .2s;flex-shrink:0}
+.step-dot:hover{transform:scale(1.1)}
+.step-dot.done{background:var(--green);border-color:var(--green)}
+.step-dot.current{background:var(--primary);border-color:var(--primary);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,98,42,.4)}50%{box-shadow:0 0 0 8px rgba(192,98,42,0)}}
+.step-line{height:3px;width:44px;background:var(--border);flex-shrink:0}
+.step-line.done{background:var(--green)}
+.step-label{font-size:10px;text-align:center;color:var(--muted);margin-top:4px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(45,31,14,.45);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:12px;padding:26px 26px 20px;max-width:460px;width:90%;box-shadow:var(--shl)}
+.modal.modal-lg{max-width:560px}
+.modal h3{font-size:17px;margin-bottom:10px}
+.modal p{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.print-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.pf-option{border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500}
+.pf-option:hover,.pf-option.selected{border-color:var(--primary);background:var(--pl);color:var(--primary);font-weight:700}
+.pf-icon{font-size:20px}
+.pf-date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.format-row{display:flex;gap:9px;margin-bottom:14px}
+.fmt-btn{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;transition:all .18s;background:var(--surface)}
+.fmt-btn:hover,.fmt-btn.selected{border-color:var(--primary);background:var(--pl);color:var(--primary)}
+.fmt-btn .fmt-icon{font-size:22px;display:block;margin-bottom:3px}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:11px 18px;border-radius:9px;font-size:14px;font-weight:500;z-index:300;box-shadow:var(--shl);transform:translateY(80px);opacity:0;transition:all .28s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:8px;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* SETTINGS PANEL */
+.settings-panel{position:fixed;top:56px;right:0;width:300px;background:var(--surface);border-left:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0 0 0 12px;box-shadow:var(--shl);padding:20px;z-index:150;display:none}
+.settings-panel.open{display:block}
+.settings-panel h4{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--primary)}
+.settings-info{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;word-break:break-all}
+
+@media(max-width:680px){.form-row{grid-template-columns:1fr}.form-row.triple{grid-template-columns:1fr 1fr}.prodotto-row{grid-template-columns:1fr 1fr}.topbar-nav{display:none}.stat-grid{grid-template-columns:1fr 1fr}.pagamento-row{grid-template-columns:1fr 1fr}.detail-header{flex-direction:column}.detail-actions{margin-left:0}.cfg-grid{grid-template-columns:1fr}}
+@media print{.topbar,.form-actions,.detail-actions,.filters-bar,.btn,.export-toolbar,.backup-banner,.settings-panel,.no-print{display:none!important}.page{display:block!important;padding:0}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen" class="setup-overlay">
+  <div class="setup-card">
+    <div class="setup-logo">🍞</div>
+    <h1>Configura il Gestionale Cloud</h1>
+    <p class="setup-desc">Collega il gestionale a <strong>Firebase</strong> (gratuito, di Google) per usarlo su tutti i tuoi dispositivi con sincronizzazione automatica.</p>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <strong>Crea un progetto Firebase gratuito</strong>
+          <p>Vai su <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>, accedi con Google e clicca <strong>Aggiungi progetto</strong>. Chiamalo "gestionale-forno" e completa i passaggi.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <strong>Attiva Firestore Database</strong>
+          <p>Nel menu laterale clicca <strong>Firestore Database → Crea database → Inizia in modalità test</strong>. Scegli la regione <code>eur3 (Europe-west)</code> e clicca <strong>Fatto</strong>.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <strong>Registra l'app web</strong>
+          <p>Clicca su <strong>⚙️ Impostazioni progetto → Le tue app → &lt;/&gt;</strong>, inserisci un nome (es. "gestionale") e clicca <strong>Registra app</strong>. Vedrai un blocco con <code>firebaseConfig = {'{...}'}</code>.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="step-n">4</div>
+        <div class="step-body">
+          <strong>Copia i valori di configurazione qui sotto</strong>
+          <p>Incolla i valori dal blocco <code>firebaseConfig</code> nei campi seguenti.</p>
+        </div>
+      </div>
+    </div>
+    <div class="cfg-grid">
+      <div class="cfg-field full"><label>API Key</label><input id="cfg-apiKey" placeholder="AIzaSy…"></div>
+      <div class="cfg-field"><label>Project ID</label><input id="cfg-projectId" placeholder="gestionale-forno"></div>
+      <div class="cfg-field"><label>Auth Domain</label><input id="cfg-authDomain" placeholder="xxx.firebaseapp.com"></div>
+      <div class="cfg-field"><label>Storage Bucket</label><input id="cfg-storageBucket" placeholder="xxx.appspot.com"></div>
+      <div class="cfg-field"><label>Messaging Sender ID</label><input id="cfg-messagingSenderId" placeholder="123456789"></div>
+      <div class="cfg-field"><label>App ID</label><input id="cfg-appId" placeholder="1:xxx:web:xxx"></div>
+    </div>
+    <div class="setup-err" id="setupErr">⚠️ Compila tutti i campi obbligatori (API Key e Project ID).</div>
+    <button class="btn-setup" onclick="salvaConfigFirebase()">🔗 Collega e avvia il gestionale</button>
+    <div style="margin-top:20px;font-size:13px;color:var(--muted)">
+      <strong>Regola Firestore consigliata</strong> (Firestore → Regole → Modifica → Pubblica):
+      <div class="rules-box">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /ordini/{doc} {
+      allow read, write: if true;
+    }
+  }
+}</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text">Connessione al cloud…</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">🍞 Forno</div>
+  <nav class="topbar-nav">
+    <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('ordini')">Ordini</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="conn-dot" id="connDot" title="Connesso al cloud"></div>
+    <button class="btn-new" onclick="nuovoOrdine()">＋ Nuovo Ordine</button>
+    <button class="settings-btn" onclick="toggleSettings()" title="Impostazioni">⚙️</button>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel">
+  <h4>⚙️ Impostazioni Cloud</h4>
+  <div class="settings-info" id="settingsInfo"></div>
+  <button class="btn btn-danger" style="width:100%;justify-content:center;font-size:13px" onclick="disconnetti()">🔌 Disconnetti e riconfigura</button>
+</div>
+
+<!-- BACKUP BANNER -->
+<div class="backup-banner" id="backupBanner" style="display:none">
+  <span>⏰</span>
+  <div class="bb-text"><strong>Backup consigliato</strong> — Ultimo backup: <span id="backupLastDate">mai</span>.</div>
+  <button class="bb-btn" onclick="backupJSON()">💾 Scarica backup</button>
+  <button class="bb-close" onclick="document.getElementById('backupBanner').style.display='none'">✕</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="modalTitle"></h3><p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL STAMPA -->
+<div class="modal-overlay" id="modalStampaOverlay" style="display:none" onclick="closeModalStampa()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3 style="margin-bottom:6px">🖨️ Stampa / Esporta Excel</h3>
+    <p style="margin-bottom:14px">Scegli quali ordini includere e il formato.</p>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Filtro ordini</div>
+    <div class="print-filter-grid" id="pfGrid">
+      <div class="pf-option selected" data-filtro="tutti" onclick="selectPF(this)"><span class="pf-icon">📋</span><span>Tutti gli ordini</span></div>
+      <div class="pf-option" data-filtro="da_fare" onclick="selectPF(this)"><span class="pf-icon">🔥</span><span>Da preparare</span></div>
+      <div class="pf-option" data-filtro="pronto" onclick="selectPF(this)"><span class="pf-icon">✅</span><span>Pronti</span></div>
+      <div class="pf-option" data-filtro="consegnato" onclick="selectPF(this)"><span class="pf-icon">📦</span><span>Evasi</span></div>
+      <div class="pf-option" data-filtro="oggi" onclick="selectPF(this)"><span class="pf-icon">☀️</span><span>Solo oggi</span></div>
+      <div class="pf-option" data-filtro="date" onclick="selectPF(this)"><span class="pf-icon">📅</span><span>Intervallo date</span></div>
+    </div>
+    <div class="pf-date-row" id="pfDateRow" style="display:none">
+      <div class="form-group"><label>Da</label><input type="date" id="pfDa" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:100%"></div>
+      <div class="form-group"><label>A</label><input type="date" id="pfA" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:100%"></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Formato</div>
+    <div class="format-row">
+      <div class="fmt-btn selected" id="fmtStampa" onclick="selectFmt('stampa')"><span class="fmt-icon">🖨️</span>Lista stampa</div>
+      <div class="fmt-btn" id="fmtFogli" onclick="selectFmt('fogli')"><span class="fmt-icon">📄</span>Fogli lavorazione</div>
+      <div class="fmt-btn" id="fmtExcel" onclick="selectFmt('excel')"><span class="fmt-icon">📊</span>Excel</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="fmtDesc">Stampa la lista ordini in formato tabellare.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModalStampa()">Annulla</button>
+      <button class="btn btn-primary" onclick="eseguiOutput()">▶ Procedi</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div style="color:var(--muted);font-size:13px;margin-bottom:18px" id="dashDate"></div>
+  <div id="alertImminenti" style="display:none"></div>
+  <div class="stat-grid">
+    <div class="stat-card total" onclick="showPage('ordini','')"><div class="label">Totale ordini</div><div class="value" id="stat-total">0</div><div class="sub">nel database</div></div>
+    <div class="stat-card ricevuto" onclick="showPage('ordini','ricevuto')"><div class="label">Ricevuti</div><div class="value" id="stat-ricevuto">0</div><div class="sub">da avviare</div></div>
+    <div class="stat-card preparazione" onclick="showPage('ordini','in_preparazione')"><div class="label">In preparazione</div><div class="value" id="stat-preparazione">0</div><div class="sub">in lavorazione</div></div>
+    <div class="stat-card pronto" onclick="showPage('ordini','pronto')"><div class="label">Pronti</div><div class="value" id="stat-pronto">0</div><div class="sub">da consegnare</div></div>
+    <div class="stat-card consegnato" onclick="showPage('ordini','consegnato')"><div class="label">Consegnati</div><div class="value" id="stat-consegnato">0</div><div class="sub">completati</div></div>
+  </div>
+  <div class="section-title">📅 Ordini di oggi <span class="badge" id="badge-oggi">0</span></div>
+  <div class="order-mini-list" id="ordiniOggi"><div class="empty-state"><div class="icon">☀️</div><p>Nessun ordine per oggi.</p></div></div>
+  <div style="height:26px"></div>
+  <div class="section-title">🗓️ Prossimi 3 giorni <span class="badge" id="badge-prossimi">0</span></div>
+  <div class="order-mini-list" id="ordiniProssimi"><div class="empty-state"><div class="icon">📭</div><p>Nessun ordine in arrivo.</p></div></div>
+</div>
+
+<!-- LISTA ORDINI -->
+<div class="page" id="page-ordini">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:10px">
+    <h2 style="font-size:19px;font-weight:700">Tutti gli ordini</h2>
+    <button class="btn btn-primary" onclick="nuovoOrdine()">＋ Nuovo Ordine</button>
+  </div>
+  <div class="export-toolbar">
+    <button class="btn-tool green" onclick="apriModalStampa()">🖨️ Stampa / Export</button>
+    <button class="btn-tool blue" onclick="backupJSON()">💾 Backup JSON</button>
+    <button class="btn-tool orange" onclick="ripristinaBackup()">📂 Ripristina backup</button>
+    <span style="font-size:12px;color:var(--muted);margin-left:auto" id="backupStatusLabel"></span>
+    <input type="file" id="ripristinaInput" accept=".json" style="display:none" onchange="caricaBackup(event)">
+  </div>
+  <div class="filters-bar">
+    <input type="text" id="searchInput" placeholder="🔍 Cerca cliente o ID…" oninput="renderOrdini()">
+    <select id="filterStato" onchange="renderOrdini()">
+      <option value="">Tutti gli stati</option>
+      <option value="ricevuto">Ricevuto</option>
+      <option value="in_preparazione">In preparazione</option>
+      <option value="pronto">Pronto</option>
+      <option value="consegnato">Consegnato</option>
+      <option value="annullato">Annullato</option>
+    </select>
+    <select id="filterPeriodo" onchange="renderOrdini()">
+      <option value="">Tutte le date</option>
+      <option value="oggi">Oggi</option>
+      <option value="domani">Domani</option>
+      <option value="settimana">Questa settimana</option>
+      <option value="mese">Questo mese</option>
+    </select>
+    <button class="sort-btn" id="sortBtn" onclick="toggleSort()">📅 Data ↕</button>
+  </div>
+  <div class="orders-table-wrap">
+    <table><thead><tr><th>ID</th><th>Cliente</th><th>Consegna</th><th>Prodotti</th><th>Totale</th><th>Stato</th><th>Azioni</th></tr></thead>
+    <tbody id="ordiniTableBody"></tbody></table>
+  </div>
+  <div id="ordiniEmpty" class="empty-state" style="display:none"><div class="icon">📋</div><p>Nessun ordine trovato.</p></div>
+  <div style="margin-top:9px;font-size:13px;color:var(--muted)" id="ordiniCount"></div>
+</div>
+
+<!-- FORM ORDINE -->
+<div class="page form-page" id="page-form">
+  <div style="display:flex;align-items:center;gap:11px;margin-bottom:20px">
+    <button class="btn btn-secondary" onclick="showPage('ordini')" style="padding:7px 11px">← Indietro</button>
+    <h2 style="font-size:19px;font-weight:700" id="formTitle">Nuovo Ordine</h2>
+    <span style="margin-left:auto;font-size:13px;color:var(--muted)" id="formId"></span>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">📋 Stato</div>
+    <div class="stato-selector" id="statoSelector">
+      <div class="stato-opt ricevuto" data-stato="ricevuto" onclick="selectStato('ricevuto')">📥 Ricevuto</div>
+      <div class="stato-opt in_preparazione" data-stato="in_preparazione" onclick="selectStato('in_preparazione')">🔥 In preparazione</div>
+      <div class="stato-opt pronto" data-stato="pronto" onclick="selectStato('pronto')">✅ Pronto</div>
+      <div class="stato-opt consegnato" data-stato="consegnato" onclick="selectStato('consegnato')">📦 Consegnato</div>
+      <div class="stato-opt annullato" data-stato="annullato" onclick="selectStato('annullato')">❌ Annullato</div>
+    </div>
+    <input type="hidden" id="f-stato" value="ricevuto">
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">👤 Dati Cliente</div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome e Cognome *</label><input type="text" id="f-nome" placeholder="Es. Mario Rossi"></div>
+      <div class="form-group"><label>Telefono *</label><input type="tel" id="f-telefono" placeholder="Es. 333 1234567"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="Es. mario@email.com"></div>
+      <div class="form-group"><label>Note cliente</label><input type="text" id="f-note-cliente" placeholder="Es. Allergie, preferenze…"></div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">🚚 Ritiro / Consegna</div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Tipo *</label><select id="f-tipo" onchange="toggleIndirizzo()"><option value="ritiro">🏪 Ritiro in negozio</option><option value="consegna">🚚 Consegna a domicilio</option></select></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="f-data"></div>
+      <div class="form-group"><label>Ora</label><input type="time" id="f-ora"></div>
+    </div>
+    <div class="form-row single" id="indirizzoRow" style="display:none">
+      <div class="form-group"><label>Indirizzo</label><input type="text" id="f-indirizzo" placeholder="Via, numero civico, città…"></div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">🛒 Prodotti</div>
+    <div class="prodotto-labels"><span>Categoria</span><span>Prodotto</span><span>Q.tà</span><span>Prezzo/u (€)</span><span>Subtotale</span><span></span></div>
+    <div class="prodotti-list" id="prodottiList"></div>
+    <button class="btn-add-prod" onclick="addProdotto()">+ Aggiungi prodotto</button>
+    <div class="totale-preview">Totale: <strong id="totalePreview">€ 0,00</strong></div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">💰 Pagamento</div>
+    <div class="pagamento-row">
+      <div class="form-group"><label>Totale (€)</label><input type="number" id="f-totale" min="0" step="0.01" placeholder="0,00" oninput="calcSaldo()"></div>
+      <div class="form-group"><label>Acconto (€)</label><input type="number" id="f-acconto" min="0" step="0.01" placeholder="0,00" oninput="calcSaldo()"></div>
+      <div class="form-group"><label>Metodo</label><select id="f-metodo"><option value="non specificato">Non specificato</option><option value="contanti">💵 Contanti</option><option value="carta">💳 Carta</option><option value="bonifico">🏦 Bonifico</option><option value="misto">🔄 Misto</option></select></div>
+    </div>
+    <div class="saldo-info" id="saldoInfo"></div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">📝 Note Ordine</div>
+    <div class="form-group"><textarea id="f-note-ordine" placeholder="Note interne, istruzioni preparazione…"></textarea></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-secondary" onclick="showPage('ordini')">Annulla</button>
+    <button class="btn btn-primary" onclick="salvaOrdine()">💾 Salva Ordine</button>
+  </div>
+  <input type="hidden" id="f-edit-id">
+</div>
+
+<!-- DETTAGLIO -->
+<div class="page" id="page-dettaglio">
+  <div class="detail-header">
+    <div>
+      <div class="detail-id" id="d-id"></div>
+      <div class="detail-cliente" id="d-cliente"></div>
+      <div style="margin-top:5px" id="d-stato-badge"></div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn btn-secondary" onclick="showPage('ordini')" style="padding:7px 12px">← Ordini</button>
+      <button class="btn btn-secondary" onclick="printOrdine()">🖨️ Stampa</button>
+      <button class="btn btn-primary" id="d-edit-btn">✏️ Modifica</button>
+      <button class="btn btn-danger" id="d-delete-btn">🗑️ Elimina</button>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:16px;box-shadow:var(--sh)">
+    <div class="section-title" style="margin-bottom:11px">Avanzamento</div>
+    <div style="display:flex;align-items:flex-end;gap:0;overflow-x:auto;padding-bottom:4px" id="timelineContainer"></div>
+  </div>
+  <div class="info-grid" id="d-info-grid"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:16px">
+    <div style="padding:13px 17px;border-bottom:1px solid var(--border)"><div class="section-title" style="margin:0">🛒 Prodotti</div></div>
+    <table class="prodotti-detail-table">
+      <thead><tr><th>Categoria</th><th>Prodotto</th><th>Q.tà</th><th>Prezzo/u</th><th>Subtotale</th><th>Note</th></tr></thead>
+      <tbody id="d-prodotti"></tbody>
+      <tfoot><tr><td colspan="4" style="text-align:right">Totale</td><td id="d-totale-calc"></td><td></td></tr></tfoot>
+    </table>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
+      <div class="section-title" style="margin-bottom:11px">💰 Pagamento</div>
+      <div id="d-pagamento"></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
+      <div class="section-title" style="margin-bottom:11px">📝 Note</div>
+      <div id="d-note" style="font-size:14px;color:var(--muted);line-height:1.6"></div>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
+    <div class="section-title" style="margin-bottom:11px">⚡ Aggiorna Stato</div>
+    <div class="stato-selector" id="d-stato-selector"></div>
+  </div>
+</div>
+
+</div><!-- /mainApp -->
+
+<script>
+// ═══════════════════════════ STATE ═══════════════════════════
+const CFG_KEY = 'forno_firebase_cfg_v1';
+const BACKUP_KEY = 'forno_last_backup';
+let _db = null;
+let _ordiniCache = [];
+let _currentPage = 'dashboard';
+let _currentDetailId = null;
+let _sortAsc = false;
+let _pfFiltro = 'tutti';
+let _pfFmt = 'stampa';
+let _prodottoId = 0;
+let _unsubscribe = null;
+let _initialLoad = false;
+
+// ═══════════════════════════ CONFIG ═══════════════════════════
+function getConfig(){try{return JSON.parse(localStorage.getItem(CFG_KEY));}catch{return null;}}
+
+function salvaConfigFirebase(){
+  const apiKey=document.getElementById('cfg-apiKey').value.trim();
+  const projectId=document.getElementById('cfg-projectId').value.trim();
+  if(!apiKey||!projectId){document.getElementById('setupErr').style.display='block';return;}
+  document.getElementById('setupErr').style.display='none';
+  const cfg={
+    apiKey,
+    projectId,
+    authDomain:document.getElementById('cfg-authDomain').value.trim()||projectId+'.firebaseapp.com',
+    storageBucket:document.getElementById('cfg-storageBucket').value.trim()||projectId+'.appspot.com',
+    messagingSenderId:document.getElementById('cfg-messagingSenderId').value.trim(),
+    appId:document.getElementById('cfg-appId').value.trim()
+  };
+  localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+  startFirebase(cfg);
+}
+
+function disconnetti(){
+  if(!confirm('Disconnettersi? Dovrai reinserire la configurazione Firebase.'))return;
+  if(_unsubscribe)_unsubscribe();
+  localStorage.removeItem(CFG_KEY);
+  location.reload();
+}
+
+function toggleSettings(){
+  const p=document.getElementById('settingsPanel');
+  p.classList.toggle('open');
+  const cfg=getConfig();
+  const stato=_localMode?'🟡 Modalità locale (questo dispositivo)':(navigator.onLine?'🟢 Cloud connesso':'🟡 Offline');
+  if(cfg)document.getElementById('settingsInfo').innerHTML=`<strong>Progetto:</strong> ${cfg.projectId}<br><strong>Stato:</strong> ${stato}`;
+}
+
+// ═══════════════════════════ FIREBASE ═══════════════════════════
+const LOCAL_KEY='forno_ordini_local_v1';
+let _loadTimeout=null;
+let _localMode=false;
+
+function _hideLoading(){
+  clearTimeout(_loadTimeout);_loadTimeout=null;
+  document.getElementById('loadingOverlay').style.display='none';
+}
+
+// Mostra subito la struttura dell'app, poi carica i dati
+function startFirebase(cfg){
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('loadingOverlay').style.display='flex';
+
+  // SDK Firebase non caricato (CDN bloccato / offline) → modalità locale
+  if(typeof firebase==='undefined'||!firebase.firestore){
+    enterLocalMode('Modalità locale (cloud non raggiungibile)');
+    return;
+  }
+
+  // Timeout di sicurezza: se il cloud non risponde entro 4 s, passa al locale
+  _loadTimeout=setTimeout(()=>{
+    if(!_initialLoad)enterLocalMode('Connessione lenta – modalità locale');
+  },4000);
+
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(cfg);
+    _db=firebase.firestore();
+    // enablePersistence non è compatibile con file:// — solo su http/https
+    if(location.protocol!=='file:'){
+      try{_db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){}
+    }
+    document.getElementById('mainApp').style.display='block';
+    setupRealtimeSync();
+  }catch(err){
+    enterLocalMode('Modalità locale (errore cloud)');
+  }
+}
+
+// ── Modalità LOCALE (localStorage) — l'app resta sempre operativa ──────────────
+function _loadLocal(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY))||[];}catch{return[];}}
+function _saveLocal(){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(_ordiniCache));}catch(e){}}
+
+function enterLocalMode(msg){
+  if(_localMode)return;
+  _localMode=true;
+  _hideLoading();
+  if(_unsubscribe){try{_unsubscribe();}catch(e){}_unsubscribe=null;}
+  _ordiniCache=_loadLocal();
+  document.getElementById('mainApp').style.display='block';
+  setConnDot(false);
+  if(!_initialLoad){
+    _initialLoad=true;
+    if(_ordiniCache.length===0){_ordiniCache=getSampleData();_saveLocal();}
+    checkAutoBackup();
+  }
+  renderCurrentPage();
+  if(msg)showToast(msg,'');
+}
+
+function setupRealtimeSync(){
+  if(_unsubscribe)_unsubscribe();
+  _unsubscribe=_db.collection('ordini').onSnapshot(
+    snap=>{
+      _localMode=false;
+      _ordiniCache=snap.docs.map(d=>({...d.data(),id:d.id}));
+      _hideLoading();
+      setConnDot(true);
+      if(!_initialLoad){
+        _initialLoad=true;
+        if(_ordiniCache.length===0)addSampleData();
+        renderCurrentPage();
+        checkAutoBackup();
+      } else {
+        renderCurrentPage();
+      }
+    },
+    err=>{
+      // Se non siamo ancora partiti, passa al locale; altrimenti segnala offline
+      if(!_initialLoad){enterLocalMode('Cloud non disponibile – modalità locale');}
+      else{_hideLoading();setConnDot(false);showToast('Errore sync: '+err.message,'error');}
+    }
+  );
+}
+
+function setConnDot(online){
+  const d=document.getElementById('connDot');
+  if(!d)return;
+  d.classList.toggle('offline',!online);
+  d.title=online?'🟢 Connesso al cloud':(_localMode?'🟡 Modalità locale – dati salvati su questo dispositivo':'🟡 Offline – le modifiche saranno sincronizzate');
+}
+window.addEventListener('online',()=>setConnDot(true));
+window.addEventListener('offline',()=>setConnDot(false));
+
+// ═══════════════════════════ CRUD ═══════════════════════════
+function loadOrdini(){return _ordiniCache;}
+
+async function salvaOrdineCloud(ordine){
+  if(_localMode){
+    const i=_ordiniCache.findIndex(o=>o.id===ordine.id);
+    if(i>=0)_ordiniCache[i]=ordine;else _ordiniCache.push(ordine);
+    _saveLocal();renderCurrentPage();return;
+  }
+  await _db.collection('ordini').doc(ordine.id).set(ordine);
+}
+
+async function eliminaOrdineCloud(id){
+  if(_localMode){
+    _ordiniCache=_ordiniCache.filter(o=>o.id!==id);
+    _saveLocal();renderCurrentPage();return;
+  }
+  await _db.collection('ordini').doc(id).delete();
+}
+
+async function updateStatoCloud(id,stato){
+  if(_localMode){
+    const o=_ordiniCache.find(x=>x.id===id);
+    if(o){o.stato=stato;o.updatedAt=Date.now();_saveLocal();renderCurrentPage();}
+    return;
+  }
+  await _db.collection('ordini').doc(id).update({stato,updatedAt:Date.now()});
+}
+
+function genId(){
+  const nums=_ordiniCache.map(o=>parseInt(o.id.replace('ORD-',''))).filter(n=>!isNaN(n));
+  const next=nums.length?Math.max(...nums)+1:1;
+  return 'ORD-'+String(next).padStart(4,'0');
+}
+
+function getSampleData(){
+  return [
+    {id:'ORD-0001',createdAt:Date.now()-86400000*2,stato:'pronto',
+     cliente:{nome:'Maria Bianchi',telefono:'333 1122334',email:'',noteCliente:'Allergia alle noci'},
+     consegna:{tipo:'ritiro',data:todayStr(),ora:'10:30',indirizzo:''},
+     prodotti:[{categoria:'pasticceria',nome:'Torta di compleanno cioccolato',quantita:1,prezzo:35},{categoria:'pane',nome:'Pane di farro',quantita:3,prezzo:3.5}],
+     pagamento:{totale:45.5,acconto:20,metodo:'contanti'},noteOrdine:'Scritta: "Buon compleanno Marco!"'},
+    {id:'ORD-0002',createdAt:Date.now()-3600000,stato:'ricevuto',
+     cliente:{nome:'Luigi Verdi',telefono:'347 5566778',email:'luigi@email.it',noteCliente:''},
+     consegna:{tipo:'consegna',data:offsetDate(todayStr(),1),ora:'12:00',indirizzo:'Via Roma 15, Milano'},
+     prodotti:[{categoria:'pizza',nome:'Pizza rossa al taglio',quantita:6,prezzo:4},{categoria:'pizza',nome:'Focaccia farcita',quantita:4,prezzo:3.5}],
+     pagamento:{totale:38,acconto:0,metodo:'carta'},noteOrdine:'Evento aziendale'},
+    {id:'ORD-0003',createdAt:Date.now()-7200000,stato:'in_preparazione',
+     cliente:{nome:'Sara Conti',telefono:'389 9988776',email:'',noteCliente:''},
+     consegna:{tipo:'ritiro',data:offsetDate(todayStr(),2),ora:'09:00',indirizzo:''},
+     prodotti:[{categoria:'catering',nome:'Buffet dolce 30 persone',quantita:1,prezzo:180},{categoria:'pane',nome:'Grissini assortiti',quantita:5,prezzo:4}],
+     pagamento:{totale:200,acconto:100,metodo:'bonifico'},noteOrdine:'Matrimonio – allestimento alle 8:30'}
+  ];
+}
+
+async function addSampleData(){
+  const sample=getSampleData();
+  const batch=_db.batch();
+  sample.forEach(o=>batch.set(_db.collection('ordini').doc(o.id),o));
+  await batch.commit();
+}
+
+// ═══════════════════════════ NAVIGATION ═══════════════════════════
+function renderCurrentPage(){
+  if(_currentPage==='dashboard')renderDashboard();
+  else if(_currentPage==='ordini')renderOrdini();
+  else if(_currentPage==='dettaglio'&&_currentDetailId)apriDettaglio(_currentDetailId);
+}
+
+function showPage(name,filterStato){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const navMap={dashboard:0,ordini:1};
+  const btns=document.querySelectorAll('.nav-btn');
+  if(navMap[name]!==undefined)btns[navMap[name]]?.classList.add('active');
+  _currentPage=name;
+  document.getElementById('settingsPanel').classList.remove('open');
+  if(name==='dashboard')renderDashboard();
+  if(name==='ordini'){
+    if(filterStato!==undefined)document.getElementById('filterStato').value=filterStato;
+    renderOrdini();
+  }
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════ DASHBOARD ═══════════════════════════
+function renderDashboard(){
+  const ordini=loadOrdini();
+  const oggi=todayStr();
+  document.getElementById('dashDate').textContent='📅 '+new Date().toLocaleDateString('it-IT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('stat-total').textContent=ordini.length;
+  ['ricevuto','in_preparazione','pronto','consegnato'].forEach(s=>{
+    const id=s==='in_preparazione'?'preparazione':s;
+    document.getElementById('stat-'+id).textContent=ordini.filter(o=>o.stato===s).length;
+  });
+  const pronti=ordini.filter(o=>o.stato==='pronto');
+  const alertDiv=document.getElementById('alertImminenti');
+  if(pronti.length>0){alertDiv.style.display='flex';alertDiv.className='alert-box';alertDiv.innerHTML=`<span>⚠️</span><div class="text"><strong>${pronti.length} ordine${pronti.length>1?'i':''} pronto${pronti.length>1?'i':''}</strong> in attesa di consegna o ritiro.</div>`;}
+  else alertDiv.style.display='none';
+  const oggi_ordini=ordini.filter(o=>o.consegna?.data===oggi&&o.stato!=='annullato').sort((a,b)=>(a.consegna?.ora||'99:99').localeCompare(b.consegna?.ora||'99:99'));
+  document.getElementById('badge-oggi').textContent=oggi_ordini.length;
+  renderMiniList('ordiniOggi',oggi_ordini,'☀️','Nessun ordine per oggi.');
+  const prossimi=ordini.filter(o=>o.consegna?.data>=offsetDate(oggi,1)&&o.consegna?.data<=offsetDate(oggi,3)&&o.stato!=='annullato').sort((a,b)=>a.consegna.data.localeCompare(b.consegna.data)||(a.consegna?.ora||'').localeCompare(b.consegna?.ora||''));
+  document.getElementById('badge-prossimi').textContent=prossimi.length;
+  renderMiniList('ordiniProssimi',prossimi,'📭','Nessun ordine in arrivo.');
+}
+
+function renderMiniList(id,ordini,icon,msg){
+  const c=document.getElementById(id);
+  if(!ordini.length){c.innerHTML=`<div class="empty-state"><div class="icon">${icon}</div><p>${msg}</p></div>`;return;}
+  c.innerHTML=ordini.map(o=>{
+    const ps=(o.prodotti||[]).slice(0,2).map(p=>`${p.quantita}x ${p.nome}`).join(', ')+((o.prodotti||[]).length>2?'…':'');
+    const dl=o.consegna?.data===todayStr()?'Oggi':formatDate(o.consegna?.data);
+    return`<div class="order-mini" onclick="apriDettaglio('${o.id}')">
+      <div class="orario">${o.consegna?.ora||'--:--'}</div>
+      <div class="info"><div class="cliente-name">${esc(o.cliente?.nome||'—')}</div><div class="prodotti-short">${esc(ps)||'Nessun prodotto'}</div></div>
+      <div class="right"><div class="totale">${fmtEur(totaleOrdine(o))}</div><div class="tipo-badge">${o.consegna?.tipo==='consegna'?'🚚':'🏪'} ${dl}</div><div style="margin-top:3px">${badgeStato(o.stato)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════ LISTA ORDINI ═══════════════════════════
+function renderOrdini(){
+  let ordini=loadOrdini();
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const stato=document.getElementById('filterStato').value;
+  const periodo=document.getElementById('filterPeriodo').value;
+  const oggi=todayStr();
+  if(search)ordini=ordini.filter(o=>(o.cliente?.nome||'').toLowerCase().includes(search)||o.id.toLowerCase().includes(search)||(o.cliente?.telefono||'').includes(search));
+  if(stato)ordini=ordini.filter(o=>o.stato===stato);
+  if(periodo==='oggi')ordini=ordini.filter(o=>o.consegna?.data===oggi);
+  else if(periodo==='domani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,1));
+  else if(periodo==='settimana'){const e=offsetDate(oggi,7);ordini=ordini.filter(o=>o.consegna?.data>=oggi&&o.consegna?.data<=e);}
+  else if(periodo==='mese'){const e=offsetDate(oggi,30);ordini=ordini.filter(o=>o.consegna?.data>=oggi&&o.consegna?.data<=e);}
+  ordini.sort((a,b)=>{const c=(a.consegna?.data||'').localeCompare(b.consegna?.data||'')||((a.consegna?.ora||'').localeCompare(b.consegna?.ora||''));return _sortAsc?c:-c;});
+  const tbody=document.getElementById('ordiniTableBody');
+  const empty=document.getElementById('ordiniEmpty');
+  document.getElementById('ordiniCount').textContent=`${ordini.length} ordine${ordini.length!==1?'i':''} trovato${ordini.length!==1?'i':''}`;
+  if(!ordini.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=ordini.map(o=>{
+    const pl=(o.prodotti||[]).slice(0,2).map(p=>`<span class="badge-cat ${p.categoria}">${catEmoji(p.categoria)} ${esc(p.nome.substring(0,16))} ×${p.quantita}</span>`).join(' ');
+    const more=(o.prodotti||[]).length>2?`<span style="font-size:11px;color:var(--muted)">+${(o.prodotti||[]).length-2}</span>`:'';
+    return`<tr class="clickable" onclick="apriDettaglio('${o.id}')">
+      <td><code style="font-size:12px;background:#f5ede3;padding:2px 6px;border-radius:4px">${o.id}</code></td>
+      <td><div style="font-weight:600">${esc(o.cliente?.nome||'—')}</div><div style="font-size:12px;color:var(--muted)">${esc(o.cliente?.telefono||'')}</div></td>
+      <td><div style="font-weight:600">${formatDate(o.consegna?.data)}</div><div style="font-size:12px;color:var(--muted)">${o.consegna?.ora?'🕐 '+o.consegna.ora:''} ${o.consegna?.tipo==='consegna'?'🚚':'🏪'}</div></td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">${pl} ${more}</div></td>
+      <td style="font-weight:700">${fmtEur(totaleOrdine(o))}</td>
+      <td>${badgeStato(o.stato)}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-secondary" style="padding:5px 9px;font-size:12px" onclick="event.stopPropagation();editOrdine('${o.id}')">✏️</button>
+        <button class="btn btn-danger" style="padding:5px 9px;font-size:12px" onclick="event.stopPropagation();confirmDelete('${o.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleSort(){_sortAsc=!_sortAsc;document.getElementById('sortBtn').textContent=_sortAsc?'📅 Data ↑':'📅 Data ↓';renderOrdini();}
+
+// ═══════════════════════════ DETTAGLIO ═══════════════════════════
+function apriDettaglio(id){
+  const ordini=loadOrdini();
+  const o=ordini.find(x=>x.id===id);
+  if(!o)return;
+  _currentDetailId=id;_currentPage='dettaglio';
+  document.getElementById('d-id').textContent=o.id+' — creato il '+formatDateTime(o.createdAt);
+  document.getElementById('d-cliente').textContent=o.cliente?.nome||'—';
+  document.getElementById('d-stato-badge').innerHTML=badgeStato(o.stato);
+  document.getElementById('d-edit-btn').onclick=()=>editOrdine(id);
+  document.getElementById('d-delete-btn').onclick=()=>confirmDelete(id);
+  const steps=[{k:'ricevuto',l:'Ricevuto',i:'📥'},{k:'in_preparazione',l:'Preparazione',i:'🔥'},{k:'pronto',l:'Pronto',i:'✅'},{k:'consegnato',l:'Consegnato',i:'📦'}];
+  const idx=steps.findIndex(s=>s.k===o.stato);
+  document.getElementById('timelineContainer').innerHTML=steps.map((s,i)=>{
+    const cls=i<idx?'done':o.stato===s.k?'current':'';
+    const lc=i<idx?'done':'';
+    return`<div style="display:flex;align-items:center;gap:0"><div style="display:flex;flex-direction:column;align-items:center"><div class="step-dot ${cls}" onclick="quickStato('${s.k}')" title="${s.l}">${s.i}</div><div class="step-label">${s.l}</div></div>${i<steps.length-1?`<div class="step-line ${lc}"></div>`:''}</div>`;
+  }).join('');
+  const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,saldo=tot-acc;
+  document.getElementById('d-info-grid').innerHTML=`
+    <div class="info-block"><div class="label">Tipo</div><div class="value">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
+    <div class="info-block"><div class="label">Data</div><div class="value">${formatDate(o.consegna?.data)||'—'}</div></div>
+    <div class="info-block"><div class="label">Ora</div><div class="value">${o.consegna?.ora||'—'}</div></div>
+    <div class="info-block"><div class="label">Telefono</div><div class="value"><a href="tel:${o.cliente?.telefono}" style="color:var(--primary)">${o.cliente?.telefono||'—'}</a></div></div>
+    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="info-block"><div class="label">Indirizzo</div><div class="value" style="font-size:13px">${esc(o.consegna.indirizzo)}</div></div>`:''}
+    ${o.cliente?.email?`<div class="info-block"><div class="label">Email</div><div class="value" style="font-size:13px">${esc(o.cliente.email)}</div></div>`:''}
+    <div class="info-block"><div class="label">Totale</div><div class="value big">${fmtEur(tot)}</div></div>
+    <div class="info-block"><div class="label">Saldo</div><div class="value" style="color:${saldo>0?'var(--red)':'var(--green)'}">${fmtEur(saldo)}</div></div>`;
+  document.getElementById('d-prodotti').innerHTML=(o.prodotti||[]).map(p=>`<tr>
+    <td><span class="badge-cat ${p.categoria}">${catEmoji(p.categoria)} ${catLabel(p.categoria)}</span></td>
+    <td style="font-weight:500">${esc(p.nome)}</td>
+    <td style="text-align:center">${p.quantita}</td>
+    <td>${fmtEur(p.prezzo)}</td>
+    <td style="font-weight:700">${fmtEur((p.prezzo||0)*(p.quantita||0))}</td>
+    <td style="font-size:13px;color:var(--muted)">${esc(p.noteRiga||'')}</td>
+  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nessun prodotto</td></tr>';
+  document.getElementById('d-totale-calc').textContent=fmtEur((o.prodotti||[]).reduce((s,p)=>s+(p.prezzo||0)*(p.quantita||0),0));
+  document.getElementById('d-pagamento').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Totale</span><strong>${fmtEur(tot)}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Acconto</span><span style="color:var(--green)">− ${fmtEur(acc)}</span></div>
+    <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between"><strong>Saldo</strong><strong style="font-size:17px;color:${saldo>0?'var(--red)':'var(--green)'}">${fmtEur(saldo)}</strong></div>
+    <div style="font-size:13px;color:var(--muted)">Metodo: ${metodoLabel(o.pagamento?.metodo)}</div></div>`;
+  document.getElementById('d-note').textContent=[o.noteOrdine,o.cliente?.noteCliente?'👤 '+o.cliente.noteCliente:''].filter(Boolean).join('\n\n')||'Nessuna nota.';
+  const statOpts=[{k:'ricevuto',l:'📥 Ricevuto'},{k:'in_preparazione',l:'🔥 In preparazione'},{k:'pronto',l:'✅ Pronto'},{k:'consegnato',l:'📦 Consegnato'},{k:'annullato',l:'❌ Annullato'}];
+  document.getElementById('d-stato-selector').innerHTML=statOpts.map(s=>`<div class="stato-opt ${s.k} ${o.stato===s.k?'selected':''}" onclick="quickStato('${s.k}')">${s.l}</div>`).join('');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-dettaglio').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  window.scrollTo(0,0);
+}
+
+async function quickStato(nuovoStato){
+  if(!_currentDetailId)return;
+  try{await updateStatoCloud(_currentDetailId,nuovoStato);showToast('Stato: '+statoLabel(nuovoStato),'success');}
+  catch(err){showToast('Errore aggiornamento','error');}
+}
+
+// ═══════════════════════════ FORM ═══════════════════════════
+function nuovoOrdine(){
+  document.getElementById('formTitle').textContent='Nuovo Ordine';
+  document.getElementById('formId').textContent='';
+  document.getElementById('f-edit-id').value='';
+  resetForm();selectStato('ricevuto');
+  document.getElementById('f-data').value=todayStr();
+  addProdotto();showPage('form');
+}
+
+function editOrdine(id){
+  const o=loadOrdini().find(x=>x.id===id);if(!o)return;
+  document.getElementById('formTitle').textContent='Modifica Ordine';
+  document.getElementById('formId').textContent=o.id;
+  document.getElementById('f-edit-id').value=o.id;
+  resetForm();selectStato(o.stato||'ricevuto');
+  document.getElementById('f-nome').value=o.cliente?.nome||'';
+  document.getElementById('f-telefono').value=o.cliente?.telefono||'';
+  document.getElementById('f-email').value=o.cliente?.email||'';
+  document.getElementById('f-note-cliente').value=o.cliente?.noteCliente||'';
+  document.getElementById('f-tipo').value=o.consegna?.tipo||'ritiro';
+  document.getElementById('f-data').value=o.consegna?.data||'';
+  document.getElementById('f-ora').value=o.consegna?.ora||'';
+  document.getElementById('f-indirizzo').value=o.consegna?.indirizzo||'';
+  toggleIndirizzo();
+  document.getElementById('f-totale').value=o.pagamento?.totale||'';
+  document.getElementById('f-acconto').value=o.pagamento?.acconto||'';
+  document.getElementById('f-metodo').value=o.pagamento?.metodo||'non specificato';
+  document.getElementById('f-note-ordine').value=o.noteOrdine||'';
+  document.getElementById('prodottiList').innerHTML='';
+  (o.prodotti||[]).forEach(p=>addProdotto(p));
+  if(!(o.prodotti||[]).length)addProdotto();
+  calcSaldo();aggiornaPreviewTotale();showPage('form');
+}
+
+function resetForm(){
+  ['f-nome','f-telefono','f-email','f-note-cliente','f-indirizzo','f-totale','f-acconto','f-note-ordine'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-tipo').value='ritiro';
+  document.getElementById('f-metodo').value='non specificato';
+  document.getElementById('f-ora').value='';
+  document.getElementById('prodottiList').innerHTML='';
+  document.getElementById('saldoInfo').textContent='';
+  document.getElementById('totalePreview').textContent='€ 0,00';
+  toggleIndirizzo();
+}
+
+function selectStato(stato){
+  document.getElementById('f-stato').value=stato;
+  document.querySelectorAll('#statoSelector .stato-opt').forEach(el=>el.classList.toggle('selected',el.dataset.stato===stato));
+}
+
+function toggleIndirizzo(){document.getElementById('indirizzoRow').style.display=document.getElementById('f-tipo').value==='consegna'?'grid':'none';}
+
+function addProdotto(data){
+  const id=++_prodottoId;
+  const row=document.createElement('div');
+  row.className='prodotto-row';row.dataset.pid=id;
+  const cat=data?.categoria||'pane';
+  row.innerHTML=`
+    <select onchange="aggiornaPreviewTotale()">
+      <option value="pane" ${cat==='pane'?'selected':''}>🍞 Pane</option>
+      <option value="pasticceria" ${cat==='pasticceria'?'selected':''}>🍰 Pasticceria</option>
+      <option value="pizza" ${cat==='pizza'?'selected':''}>🍕 Pizza</option>
+      <option value="catering" ${cat==='catering'?'selected':''}>🎉 Catering</option>
+      <option value="altro" ${cat==='altro'?'selected':''}>📦 Altro</option>
+    </select>
+    <input type="text" placeholder="Nome prodotto" value="${escAttr(data?.nome||'')}" oninput="aggiornaPreviewTotale()">
+    <input type="number" min="1" value="${data?.quantita||1}" oninput="aggiornaPreviewTotale()">
+    <input type="number" min="0" step="0.01" value="${escAttr(String(data?.prezzo||''))}" placeholder="0,00" oninput="aggiornaPreviewTotale()">
+    <input type="text" disabled style="background:#f5f5f5;color:#888" placeholder="—">
+    <button class="btn-del-prod" onclick="document.querySelector('.prodotto-row[data-pid=\\'${id}\\']').remove();aggiornaPreviewTotale()">✕</button>`;
+  document.getElementById('prodottiList').appendChild(row);
+  aggiornaPreviewTotale();
+}
+
+function aggiornaPreviewTotale(){
+  let tot=0;
+  document.querySelectorAll('.prodotto-row').forEach(row=>{
+    const ins=row.querySelectorAll('input,select');
+    const sub=(parseFloat(ins[2].value)||0)*(parseFloat(ins[3].value)||0);
+    tot+=sub;ins[4].value=sub>0?sub.toFixed(2).replace('.',','):'';
+  });
+  document.getElementById('totalePreview').textContent=fmtEur(tot);
+  const ft=document.getElementById('f-totale');
+  if(tot>0&&!ft.value){ft.value=tot.toFixed(2);calcSaldo();}
+}
+
+function calcSaldo(){
+  const tot=parseFloat(document.getElementById('f-totale').value)||0;
+  const acc=parseFloat(document.getElementById('f-acconto').value)||0;
+  const el=document.getElementById('saldoInfo');
+  if(tot>0){el.textContent=`Saldo residuo: ${fmtEur(tot-acc)}`;el.style.color=(tot-acc)>0?'var(--red)':'var(--green)';}
+  else el.textContent='';
+}
+
+function getProdottiFromForm(){
+  return Array.from(document.querySelectorAll('.prodotto-row')).map(row=>{
+    const ins=row.querySelectorAll('input,select');
+    return{categoria:ins[0].value,nome:ins[1].value.trim(),quantita:parseFloat(ins[2].value)||0,prezzo:parseFloat(ins[3].value)||0};
+  }).filter(p=>p.nome);
+}
+
+async function salvaOrdine(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const data=document.getElementById('f-data').value;
+  if(!nome){showToast('Inserisci il nome del cliente','error');return;}
+  if(!data){showToast('Inserisci la data','error');return;}
+  const editId=document.getElementById('f-edit-id').value;
+  const ordine={
+    id:editId||genId(),
+    createdAt:editId?(loadOrdini().find(o=>o.id===editId)?.createdAt||Date.now()):Date.now(),
+    updatedAt:Date.now(),
+    stato:document.getElementById('f-stato').value,
+    cliente:{nome,telefono:document.getElementById('f-telefono').value.trim(),email:document.getElementById('f-email').value.trim(),noteCliente:document.getElementById('f-note-cliente').value.trim()},
+    consegna:{tipo:document.getElementById('f-tipo').value,data,ora:document.getElementById('f-ora').value,indirizzo:document.getElementById('f-indirizzo').value.trim()},
+    prodotti:getProdottiFromForm(),
+    pagamento:{totale:parseFloat(document.getElementById('f-totale').value)||0,acconto:parseFloat(document.getElementById('f-acconto').value)||0,metodo:document.getElementById('f-metodo').value},
+    noteOrdine:document.getElementById('f-note-ordine').value.trim()
+  };
+  try{
+    await salvaOrdineCloud(ordine);
+    showToast(editId?'Ordine aggiornato ✓':'Ordine salvato ✓','success');
+    showPage('ordini');
+  }catch(err){showToast('Errore salvataggio: '+err.message,'error');}
+}
+
+// ═══════════════════════════ DELETE ═══════════════════════════
+function confirmDelete(id){
+  const o=loadOrdini().find(x=>x.id===id);if(!o)return;
+  document.getElementById('modalTitle').textContent='Elimina ordine?';
+  document.getElementById('modalMsg').textContent=`Stai per eliminare l'ordine ${o.id} di ${o.cliente?.nome||'—'}. Azione irreversibile.`;
+  document.getElementById('modalConfirmBtn').textContent='Elimina';
+  document.getElementById('modalConfirmBtn').onclick=async()=>{
+    try{await eliminaOrdineCloud(id);showToast('Ordine eliminato','success');showPage('ordini');}
+    catch(err){showToast('Errore eliminazione','error');}
+    closeModal();
+  };
+  document.getElementById('modalOverlay').style.display='flex';
+}
+function closeModal(){document.getElementById('modalOverlay').style.display='none';}
+
+// ═══════════════════════════ PRINT / EXPORT ═══════════════════════════
+function apriModalStampa(){
+  _pfFiltro='tutti';_pfFmt='stampa';
+  document.querySelectorAll('.pf-option').forEach(el=>el.classList.toggle('selected',el.dataset.filtro==='tutti'));
+  document.querySelectorAll('.fmt-btn').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('fmtStampa').classList.add('selected');
+  document.getElementById('pfDateRow').style.display='none';
+  document.getElementById('pfDa').value=todayStr();
+  document.getElementById('pfA').value=todayStr();
+  document.getElementById('fmtDesc').textContent='Stampa la lista ordini in formato tabellare.';
+  document.getElementById('modalStampaOverlay').style.display='flex';
+}
+function closeModalStampa(){document.getElementById('modalStampaOverlay').style.display='none';}
+function selectPF(el){
+  _pfFiltro=el.dataset.filtro;
+  document.querySelectorAll('.pf-option').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');
+  document.getElementById('pfDateRow').style.display=_pfFiltro==='date'?'grid':'none';
+}
+function selectFmt(fmt){
+  _pfFmt=fmt;document.querySelectorAll('.fmt-btn').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('fmt'+fmt.charAt(0).toUpperCase()+fmt.slice(1)).classList.add('selected');
+  const map={stampa:'Stampa la lista ordini in formato tabellare.',fogli:'Foglio di lavorazione per ogni ordine.',excel:'Esporta in Excel formattato con due fogli.'};
+  document.getElementById('fmtDesc').textContent=map[fmt]||'';
+}
+
+function getOrdiniPerOutput(){
+  const oggi=todayStr();
+  let ordini=loadOrdini();
+  if(_pfFiltro==='da_fare')ordini=ordini.filter(o=>o.stato==='ricevuto'||o.stato==='in_preparazione');
+  else if(_pfFiltro==='pronto')ordini=ordini.filter(o=>o.stato==='pronto');
+  else if(_pfFiltro==='consegnato')ordini=ordini.filter(o=>o.stato==='consegnato');
+  else if(_pfFiltro==='oggi')ordini=ordini.filter(o=>o.consegna?.data===oggi);
+  else if(_pfFiltro==='date'){const da=document.getElementById('pfDa').value,a=document.getElementById('pfA').value;ordini=ordini.filter(o=>o.consegna?.data>=da&&o.consegna?.data<=a);}
+  return ordini.sort((a,b)=>(a.consegna?.data||'').localeCompare(b.consegna?.data||'')||(a.consegna?.ora||'').localeCompare(b.consegna?.ora||''));
+}
+
+function eseguiOutput(){
+  closeModalStampa();
+  const ordini=getOrdiniPerOutput();
+  if(!ordini.length){showToast('Nessun ordine trovato','error');return;}
+  if(_pfFmt==='stampa')stampaLista(ordini);
+  else if(_pfFmt==='fogli')stampaFogliLavorazione(ordini);
+  else if(_pfFmt==='excel')esportaExcel(ordini);
+}
+
+function stampaLista(ordini){
+  const fl={tutti:'Tutti',da_fare:'Da preparare',pronto:'Pronti',consegnato:'Evasi',oggi:'Oggi',date:'Intervallo date'}[_pfFiltro]||'Tutti';
+  const html=`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Lista Ordini</title>
+  <style>body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;margin:20px}h1{font-size:16pt;color:#c0622a;margin-bottom:3px}.sub{font-size:9pt;color:#888;margin-bottom:14px}table{width:100%;border-collapse:collapse}thead tr{background:#c0622a;color:#fff}th{padding:8px 9px;text-align:left;font-size:9pt;font-weight:700}td{padding:7px 9px;font-size:9pt;border-bottom:1px solid #e8ddd0;vertical-align:top}tr:nth-child(even)td{background:#fdf8f3}.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8pt;font-weight:700}.ricevuto{background:#dceafa;color:#2a6cc0}.in_preparazione{background:#fdf3e0;color:#8a5c00}.pronto{background:#d8f2e6;color:#2d8a5a}.consegnato{background:#f0f0f0;color:#444}.annullato{background:#fde8e8;color:#c03030}.tot{background:#faeada;font-weight:700}@media print{body{margin:0}}</style></head><body>
+  <h1>🍞 Lista Ordini – Forno</h1>
+  <div class="sub">Filtro: <strong>${fl}</strong> | Generato: ${new Date().toLocaleString('it-IT')} | Tot. ordini: <strong>${ordini.length}</strong></div>
+  <table><thead><tr><th>ID</th><th>Cliente</th><th>Tel.</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Prodotti</th><th>Totale</th><th>Acconto</th><th>Saldo</th><th>Stato</th><th>Note</th></tr></thead><tbody>
+  ${ordini.map(o=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');
+  return`<tr><td><strong>${o.id}</strong></td><td><strong>${o.cliente?.nome||'—'}</strong>${o.cliente?.noteCliente?'<br><small style="color:#888">'+o.cliente.noteCliente+'</small>':''}</td><td>${o.cliente?.telefono||'—'}</td><td>${formatDate(o.consegna?.data)}</td><td>${o.consegna?.ora||'—'}</td><td>${o.consegna?.tipo==='consegna'?'🚚 Cons.':'🏪 Ritiro'}</td><td>${ps||'—'}</td><td style="font-weight:700">€ ${tot.toFixed(2)}</td><td style="color:#2d8a5a">€ ${acc.toFixed(2)}</td><td style="font-weight:700;color:${s>0?'#c03030':'#2d8a5a'}">€ ${s.toFixed(2)}</td><td><span class="badge ${o.stato}">${statoLabel(o.stato)}</span></td><td style="font-size:8pt;color:#666">${o.noteOrdine||'—'}</td></tr>`;}).join('')}
+  </tbody><tfoot><tr class="tot"><td colspan="7" style="text-align:right">TOTALE (${ordini.length})</td><td>€ ${ordini.reduce((s,o)=>s+totaleOrdine(o),0).toFixed(2)}</td><td>€ ${ordini.reduce((s,o)=>s+(o.pagamento?.acconto||0),0).toFixed(2)}</td><td>€ ${ordini.reduce((s,o)=>s+totaleOrdine(o)-(o.pagamento?.acconto||0),0).toFixed(2)}</td><td colspan="2"></td></tr></tfoot></table>
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+function stampaFogliLavorazione(ordini){
+  const stTxt={ricevuto:'Ricevuto',in_preparazione:'In prep.',pronto:'Pronto',consegnato:'Consegnato'};
+  const html=`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Fogli Lavorazione</title>
+  <style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0}.foglio{padding:24px 28px;page-break-after:always;border:3px solid #c0622a;min-height:96vh;box-sizing:border-box}.foglio:last-child{page-break-after:avoid}.fh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #c0622a;padding-bottom:12px;margin-bottom:16px}.logo{font-size:20pt;font-weight:900;color:#c0622a}.fid{background:#c0622a;color:#fff;padding:5px 14px;border-radius:7px;font-size:13pt;font-weight:700}.cn{font-size:18pt;font-weight:900;margin-bottom:5px}.tel{font-size:12pt;color:#555;margin-bottom:14px}.strip{display:flex;gap:14px;background:#fdf8f3;border:2px solid #e8ddd0;border-radius:8px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap}.si{display:flex;flex-direction:column}.si .l{font-size:8pt;font-weight:700;text-transform:uppercase;color:#8a6f55;letter-spacing:.5px}.si .v{font-size:12pt;font-weight:700}.si .vb{font-size:15pt!important;color:#c0622a}table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background:#c0622a;color:#fff}th{padding:8px 11px;text-align:left;font-size:10pt}td{padding:9px 11px;font-size:10pt;border-bottom:2px solid #e8ddd0}tr:nth-child(even)td{background:#fdf8f3}.qty{font-size:15pt;font-weight:900;color:#c0622a;text-align:center}.nb{border:2px dashed #e8a44a;border-radius:8px;padding:10px 14px;background:#fdf3e0;margin-bottom:14px}.nb .nt{font-weight:800;margin-bottom:5px;color:#8a5c00}.tl{display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:2px solid #e8ddd0}.ts{flex:1;text-align:center;padding:9px 5px;border:2px solid #e8ddd0;border-radius:7px;font-size:9pt;font-weight:700}.ts.a{background:#c0622a;color:#fff;border-color:#c0622a}.ts.d{background:#d8f2e6;border-color:#2d8a5a;color:#2d8a5a}.fr{display:flex;gap:18px;margin-top:18px}.fb{flex:1;border-bottom:2px solid #555;padding-bottom:28px}.fl{font-size:9pt;color:#888;margin-top:5px}@media print{.foglio{border:3px solid #c0622a!important}}</style></head><body>
+  ${ordini.map(o=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const idx=['ricevuto','in_preparazione','pronto','consegnato'].indexOf(o.stato);const steps=['📥 Ricevuto','🔥 In prep.','✅ Pronto','📦 Consegnato'];
+  return`<div class="foglio"><div class="fh"><div class="logo">🍞 Forno</div><div class="fid">${o.id}</div></div>
+  <div class="cn">${o.cliente?.nome||'—'}</div><div class="tel">📞 ${o.cliente?.telefono||'—'}${o.cliente?.email?' | ✉️ '+o.cliente.email:''}</div>
+  <div class="strip">
+    <div class="si"><div class="l">Data</div><div class="v vb">${formatDate(o.consegna?.data)}</div></div>
+    <div class="si"><div class="l">Ora</div><div class="v vb">${o.consegna?.ora||'—'}</div></div>
+    <div class="si"><div class="l">Tipo</div><div class="v">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
+    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="si"><div class="l">Indirizzo</div><div class="v" style="font-size:10pt">${o.consegna.indirizzo}</div></div>`:''}
+    <div class="si"><div class="l">Totale</div><div class="v" style="color:#c0622a">€ ${tot.toFixed(2)}</div></div>
+    <div class="si"><div class="l">Saldo</div><div class="v" style="color:${s>0?'#c03030':'#2d8a5a'}">€ ${s.toFixed(2)}</div></div>
+  </div>
+  <table><thead><tr><th>Categoria</th><th>Prodotto</th><th style="text-align:center">Q.tà</th></tr></thead><tbody>
+  ${(o.prodotti||[]).map(p=>`<tr><td>${{pane:'🍞 Pane',pasticceria:'🍰 Pasticceria',pizza:'🍕 Pizza',catering:'🎉 Catering',altro:'📦 Altro'}[p.categoria]||p.categoria}</td><td style="font-weight:700">${p.nome}</td><td class="qty">${p.quantita}</td></tr>`).join('')}
+  </tbody></table>
+  ${(o.noteOrdine||o.cliente?.noteCliente)?`<div class="nb"><div class="nt">⚠️ NOTE IMPORTANTI</div>${o.cliente?.noteCliente?'<div>Cliente: '+o.cliente.noteCliente+'</div>':''}${o.noteOrdine?'<div>Ordine: '+o.noteOrdine+'</div>':''}</div>`:''}
+  <div class="tl">${steps.map((s,i)=>`<div class="ts ${i<idx?'d':i===idx?'a':''}">${s}</div>`).join('')}</div>
+  <div class="fr"><div class="fb"><div class="fl">Preparato da</div></div><div class="fb"><div class="fl">Controllato da</div></div><div class="fb"><div class="fl">Consegnato / Ritirato</div></div></div>
+  </div>`;}).join('')}
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+function esportaExcel(ordini){
+  const fl={tutti:'Tutti',da_fare:'Da preparare',pronto:'Pronti',consegnato:'Evasi',oggi:'Oggi',date:'Intervallo'}[_pfFiltro]||'Tutti';
+  const sc={ricevuto:{bg:'#dceafa',fg:'#2a6cc0'},in_preparazione:{bg:'#fdf3e0',fg:'#8a5c00'},pronto:{bg:'#d8f2e6',fg:'#2d8a5a'},consegnato:{bg:'#f0f0f0',fg:'#444'},annullato:{bg:'#fde8e8',fg:'#c03030'}};
+  const st={ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'};
+  const ct={pane:'Pane',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'};
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="UTF-8"><style>td,th{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;border:1px solid #d4c8b8;padding:7px 9px}.hdr{background:#c0622a;color:#fff;font-weight:700;font-size:11pt}.hdr2{background:#7a3fb5;color:#fff;font-weight:700}.re{background:#fdf8f3}.ev{background:#fff}.tot{background:#faeada;font-weight:700}.ti{font-size:15pt;font-weight:900;color:#c0622a;border:none}.su{font-size:9pt;color:#888;border:none}.num{text-align:right}.ctr{text-align:center}.sp{color:#c03030;font-weight:700}.sn{color:#2d8a5a;font-weight:700}</style></head><body>
+  <table>
+  <tr><td class="ti" colspan="13">🍞 GESTIONALE ORDINI – FORNO</td></tr>
+  <tr><td class="su" colspan="13">Filtro: ${fl} | Generato: ${new Date().toLocaleString('it-IT')} | Ordini: ${ordini.length}</td></tr>
+  <tr><td colspan="13" style="border:none">&nbsp;</td></tr>
+  <tr><td class="hdr">ID</td><td class="hdr">Cliente</td><td class="hdr">Telefono</td><td class="hdr">Email</td><td class="hdr">Data</td><td class="hdr">Ora</td><td class="hdr">Tipo</td><td class="hdr">Prodotti</td><td class="hdr num">Totale €</td><td class="hdr num">Acconto €</td><td class="hdr num">Saldo €</td><td class="hdr ctr">Stato</td><td class="hdr">Note</td></tr>
+  ${ordini.map((o,i)=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');const cls=i%2?'re':'ev';
+  return`<tr><td class="${cls}" style="font-weight:700">${o.id}</td><td class="${cls}" style="font-weight:700">${o.cliente?.nome||'—'}</td><td class="${cls}">${o.cliente?.telefono||'—'}</td><td class="${cls}">${o.cliente?.email||''}</td><td class="${cls}" style="font-weight:700">${formatDate(o.consegna?.data)}</td><td class="${cls} ctr">${o.consegna?.ora||'—'}</td><td class="${cls}">${o.consegna?.tipo==='consegna'?'Consegna':'Ritiro'}</td><td class="${cls}" style="font-size:9pt">${ps||'—'}</td><td class="${cls} num">€ ${tot.toFixed(2)}</td><td class="${cls} num sn">€ ${acc.toFixed(2)}</td><td class="${cls} num ${s>0?'sp':'sn'}">€ ${s.toFixed(2)}</td><td class="${cls} ctr" style="background:${c.bg};color:${c.fg};font-weight:700">${st[o.stato]||o.stato}</td><td class="${cls}" style="font-size:9pt">${o.noteOrdine||''}</td></tr>`;}).join('')}
+  <tr class="tot"><td colspan="8" style="text-align:right">TOTALE (${ordini.length} ordini)</td><td class="num">€ ${ordini.reduce((s,o)=>s+totaleOrdine(o),0).toFixed(2)}</td><td class="num sn">€ ${ordini.reduce((s,o)=>s+(o.pagamento?.acconto||0),0).toFixed(2)}</td><td class="num sp">€ ${ordini.reduce((s,o)=>s+totaleOrdine(o)-(o.pagamento?.acconto||0),0).toFixed(2)}</td><td colspan="2"></td></tr>
+  </table><br><br>
+  <table><tr><td class="ti" colspan="8">📋 DETTAGLIO PRODOTTI</td></tr><tr><td colspan="8" style="border:none">&nbsp;</td></tr>
+  <tr><td class="hdr2">ID</td><td class="hdr2">Cliente</td><td class="hdr2">Data</td><td class="hdr2">Stato</td><td class="hdr2">Categoria</td><td class="hdr2">Prodotto</td><td class="hdr2 ctr">Q.tà</td><td class="hdr2 num">Subtotale €</td></tr>
+  ${ordini.flatMap((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const cls=i%2?'re':'ev';return(o.prodotti||[]).map((p,j)=>`<tr><td class="${cls}" style="font-weight:700">${j===0?o.id:''}</td><td class="${cls}">${j===0?(o.cliente?.nome||'—'):''}</td><td class="${cls}">${j===0?formatDate(o.consegna?.data):''}</td><td class="${cls}" style="${j===0?'background:'+c.bg+';color:'+c.fg+';font-weight:700':''}">${j===0?(st[o.stato]||o.stato):''}</td><td class="${cls}">${ct[p.categoria]||p.categoria}</td><td class="${cls}" style="font-weight:600">${p.nome}</td><td class="${cls} ctr" style="font-weight:700">${p.quantita}</td><td class="${cls} num" style="font-weight:700">€ ${((p.prezzo||0)*(p.quantita||0)).toFixed(2)}</td></tr>`);}).join('')}
+  </table></body></html>`;
+  const blob=new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`Ordini_Forno_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xls`;
+  a.click();URL.revokeObjectURL(url);
+  showToast(`Excel esportato (${ordini.length} ordini)`,'success');
+}
+
+// ═══════════════════════════ BACKUP ═══════════════════════════
+function backupJSON(){
+  const ordini=loadOrdini();
+  const payload={versione:2,esportato:new Date().toISOString(),totaleOrdini:ordini.length,ordini};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`Backup_Forno_${new Date().toISOString().slice(0,16).replace(/[T:]/g,'-')}.json`;
+  a.click();URL.revokeObjectURL(url);
+  localStorage.setItem(BACKUP_KEY,Date.now().toString());
+  document.getElementById('backupBanner').style.display='none';
+  aggiornaBackupLabel();
+  showToast('Backup scaricato ✓','success');
+}
+
+function ripristinaBackup(){document.getElementById('ripristinaInput').click();}
+
+async function caricaBackup(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const ordini=data.ordini||(Array.isArray(data)?data:null);
+      if(!ordini)throw new Error('Formato non valido');
+      document.getElementById('modalTitle').textContent='📂 Ripristina backup';
+      document.getElementById('modalMsg').textContent=`Il backup contiene ${ordini.length} ordini. Tutti gli ordini attuali verranno sostituiti. Continuare?`;
+      document.getElementById('modalConfirmBtn').textContent='Ripristina';
+      document.getElementById('modalConfirmBtn').onclick=async()=>{
+        closeModal();
+        showToast('Ripristino in corso…','');
+        try{
+          if(_localMode){
+            _ordiniCache=ordini.slice();_saveLocal();renderCurrentPage();
+            showToast(`Ripristinati ${ordini.length} ordini ✓`,'success');return;
+          }
+          const existing=await _db.collection('ordini').get();
+          const batchSize=400;
+          for(let i=0;i<existing.docs.length;i+=batchSize){
+            const b=_db.batch();existing.docs.slice(i,i+batchSize).forEach(d=>b.delete(d.ref));await b.commit();
+          }
+          for(let i=0;i<ordini.length;i+=batchSize){
+            const b=_db.batch();ordini.slice(i,i+batchSize).forEach(o=>b.set(_db.collection('ordini').doc(o.id),o));await b.commit();
+          }
+          showToast(`Ripristinati ${ordini.length} ordini ✓`,'success');
+        }catch(err){showToast('Errore ripristino: '+err.message,'error');}
+      };
+      document.getElementById('modalOverlay').style.display='flex';
+    }catch(err){showToast('File non valido o corrotto','error');}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function checkAutoBackup(){
+  const last=parseInt(localStorage.getItem(BACKUP_KEY)||'0');
+  const ordini=loadOrdini();
+  if(ordini.length>0&&(Date.now()-last)>86400000){
+    document.getElementById('backupLastDate').textContent=last?new Date(last).toLocaleDateString('it-IT'):'mai';
+    document.getElementById('backupBanner').style.display='flex';
+  }
+  aggiornaBackupLabel();
+}
+
+function aggiornaBackupLabel(){
+  const last=parseInt(localStorage.getItem(BACKUP_KEY)||'0');
+  const el=document.getElementById('backupStatusLabel');
+  if(el)el.textContent=last?'🟢 Backup: '+new Date(last).toLocaleDateString('it-IT'):'🔴 Nessun backup';
+}
+
+function printOrdine(){window.print();}
+
+// ═══════════════════════════ HELPERS ═══════════════════════════
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function offsetDate(base,days){const d=new Date(base);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
+function formatDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function formatDateTime(ts){if(!ts)return'—';return new Date(ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function fmtEur(n){return'€ '+(n||0).toFixed(2).replace('.',',');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){return String(s||'').replace(/"/g,'&quot;');}
+function totaleOrdine(o){const fp=(o.prodotti||[]).reduce((s,p)=>s+(p.prezzo||0)*(p.quantita||0),0);return o.pagamento?.totale||fp;}
+function badgeStato(stato){const map={ricevuto:'📥 Ricevuto',in_preparazione:'🔥 In preparazione',pronto:'✅ Pronto',consegnato:'📦 Consegnato',annullato:'❌ Annullato'};return`<span class="badge-stato ${stato}">${map[stato]||stato}</span>`;}
+function statoLabel(s){return{ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'}[s]||s;}
+function catEmoji(c){return{pane:'🍞',pasticceria:'🍰',pizza:'🍕',catering:'🎉',altro:'📦'}[c]||'📦';}
+function catLabel(c){return{pane:'Pane',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'}[c]||c;}
+function metodoLabel(m){return{contanti:'💵 Contanti',carta:'💳 Carta',bonifico:'🏦 Bonifico',misto:'🔄 Misto','non specificato':'—'}[m]||'—';}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ═══════════════════════════ INIT ═══════════════════════════
+(function preloadDefaultConfig(){
+  if(!getConfig()){
+    const defaultCfg={
+      apiKey:"AIzaSyBkw4fowYX3RjyR1TaAzVrY8u11NeMf0OQ",
+      projectId:"gestionale-forno",
+      authDomain:"gestionale-forno.firebaseapp.com",
+      storageBucket:"gestionale-forno.firebasestorage.app",
+      messagingSenderId:"860020981872",
+      appId:"1:860020981872:web:9bc84748d20a074b0ab4b5"
+    };
+    localStorage.setItem(CFG_KEY,JSON.stringify(defaultCfg));
+  }
+})();
+const cfg=getConfig();
+if(cfg&&cfg.projectId){startFirebase(cfg);}
+else{document.getElementById('setupScreen').style.display='flex';}
+</script>
+</body>
+</html>
