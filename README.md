@@ -9,3 +9,8 @@ A collection of AI-generated creative projects and experiments.
 ## Getting Started
 
 Clone this repository and explore the assets inside.
+
+## About
+
+This project explores the use of AI tools for creative content generation,
+including images, videos, and other media.
