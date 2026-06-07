@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>🍞 Gestionale Ordini – Forno Cloud</title>
+<title>🍞🍰 Gestionale Ordini – Efurner</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
@@ -122,6 +122,12 @@ tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
 .badge-stato.pronto{background:var(--gl);color:var(--green)}
 .badge-stato.consegnato{background:#f0f0f0;color:#666}
 .badge-stato.annullato{background:var(--rl);color:var(--red)}
+.badge-reparto{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.badge-reparto.forno{background:var(--pl);color:var(--ph)}
+.badge-reparto.pasticceria{background:#fde8f0;color:#b02860}
+.rep-accent{border-left:5px solid var(--accent)}
+.rep-accent.forno{border-left-color:var(--primary)}
+.rep-accent.pasticceria{border-left-color:#d6477f}
 .badge-cat{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:12px;font-weight:600}
 .badge-cat.pane{background:#fdecd5;color:#a05820}
 .badge-cat.torte{background:#f8e0ec;color:#b0306a}
@@ -167,6 +173,11 @@ tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
 .totale-preview strong{color:var(--primary);font-size:17px}
 .pagamento-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
 .saldo-info{font-size:14px;font-weight:700;margin-top:8px}
+.reparto-selector{display:flex;gap:10px;flex-wrap:wrap}
+.reparto-opt{flex:1;min-width:180px;padding:14px 18px;border-radius:10px;border:2px solid var(--border);cursor:pointer;font-size:15px;font-weight:700;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--surface)}
+.reparto-opt:hover{border-color:var(--primary)}
+.reparto-opt.forno.selected{background:var(--pl);border-color:var(--primary);color:var(--ph)}
+.reparto-opt.pasticceria.selected{background:#fde8f0;border-color:#d6477f;color:#b02860}
 .stato-selector{display:flex;gap:8px;flex-wrap:wrap}
 .stato-opt{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;gap:5px}
 .stato-opt:hover{border-color:var(--primary)}
@@ -313,7 +324,7 @@ service cloud.firestore {
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-logo">🍞 Forno</div>
+  <div class="topbar-logo">🍞🍰 Efurner</div>
   <nav class="topbar-nav">
     <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
     <button class="nav-btn" onclick="showPage('ordini')">Ordini</button>
@@ -359,18 +370,17 @@ service cloud.firestore {
   <div class="modal modal-lg" onclick="event.stopPropagation()">
     <h3 style="margin-bottom:6px">🖨️ Stampa / Esporta Excel</h3>
     <p style="margin-bottom:14px">Scegli quali ordini includere e il formato.</p>
-    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Filtro ordini</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Cosa stampare</div>
     <div class="print-filter-grid" id="pfGrid">
       <div class="pf-option selected" data-filtro="tutti" onclick="selectPF(this)"><span class="pf-icon">📋</span><span>Tutti gli ordini</span></div>
-      <div class="pf-option" data-filtro="da_fare" onclick="selectPF(this)"><span class="pf-icon">🔥</span><span>Da preparare</span></div>
-      <div class="pf-option" data-filtro="pronto" onclick="selectPF(this)"><span class="pf-icon">✅</span><span>Pronti</span></div>
-      <div class="pf-option" data-filtro="consegnato" onclick="selectPF(this)"><span class="pf-icon">📦</span><span>Evasi</span></div>
-      <div class="pf-option" data-filtro="oggi" onclick="selectPF(this)"><span class="pf-icon">☀️</span><span>Solo oggi</span></div>
-      <div class="pf-option" data-filtro="date" onclick="selectPF(this)"><span class="pf-icon">📅</span><span>Intervallo date</span></div>
+      <div class="pf-option" data-filtro="domani" onclick="selectPF(this)"><span class="pf-icon">🔥</span><span>Da preparare — Domani</span></div>
+      <div class="pf-option" data-filtro="dopodomani" onclick="selectPF(this)"><span class="pf-icon">📅</span><span>Da preparare — Dopodomani</span></div>
     </div>
-    <div class="pf-date-row" id="pfDateRow" style="display:none">
-      <div class="form-group"><label>Da</label><input type="date" id="pfDa" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:100%"></div>
-      <div class="form-group"><label>A</label><input type="date" id="pfA" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:100%"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Reparto</div>
+    <div class="print-filter-grid" id="pfRepGrid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="pf-option selected" data-rep="" onclick="selectPFRep(this)"><span class="pf-icon">🏬</span><span>Entrambi</span></div>
+      <div class="pf-option" data-rep="forno" onclick="selectPFRep(this)"><span class="pf-icon">🍞</span><span>Forno</span></div>
+      <div class="pf-option" data-rep="pasticceria" onclick="selectPFRep(this)"><span class="pf-icon">🍰</span><span>Pasticceria</span></div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Formato</div>
     <div class="format-row">
@@ -419,6 +429,11 @@ service cloud.firestore {
   </div>
   <div class="filters-bar">
     <input type="text" id="searchInput" placeholder="🔍 Cerca cliente o ID…" oninput="renderOrdini()">
+    <select id="filterReparto" onchange="renderOrdini()">
+      <option value="">Tutti i reparti</option>
+      <option value="forno">🍞 Forno Efurner</option>
+      <option value="pasticceria">🍰 Pasticceria Efurner</option>
+    </select>
     <select id="filterStato" onchange="renderOrdini()">
       <option value="">Tutti gli stati</option>
       <option value="ricevuto">Ricevuto</option>
@@ -437,7 +452,7 @@ service cloud.firestore {
     <button class="sort-btn" id="sortBtn" onclick="toggleSort()">📅 Data ↕</button>
   </div>
   <div class="orders-table-wrap">
-    <table><thead><tr><th>ID</th><th>Cliente</th><th>Consegna</th><th>Prodotti</th><th>Stato</th><th>Azioni</th></tr></thead>
+    <table><thead><tr><th>ID</th><th>Reparto</th><th>Cliente</th><th>Ritiro</th><th>Prodotti</th><th>Stato</th><th>Azioni</th></tr></thead>
     <tbody id="ordiniTableBody"></tbody></table>
   </div>
   <div id="ordiniEmpty" class="empty-state" style="display:none"><div class="icon">📋</div><p>Nessun ordine trovato.</p></div>
@@ -450,6 +465,14 @@ service cloud.firestore {
     <button class="btn btn-secondary" onclick="showPage('ordini')" style="padding:7px 11px">← Indietro</button>
     <h2 style="font-size:19px;font-weight:700" id="formTitle">Nuovo Ordine</h2>
     <span style="margin-left:auto;font-size:13px;color:var(--muted)" id="formId"></span>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title">🏷️ Reparto *</div>
+    <div class="reparto-selector" id="repartoSelector">
+      <div class="reparto-opt forno" data-reparto="forno" onclick="selectReparto('forno')">🍞 Forno Efurner</div>
+      <div class="reparto-opt pasticceria" data-reparto="pasticceria" onclick="selectReparto('pasticceria')">🍰 Pasticceria Efurner</div>
+    </div>
+    <input type="hidden" id="f-reparto" value="forno">
   </div>
   <div class="form-card">
     <div class="form-card-title">📋 Stato</div>
@@ -473,14 +496,11 @@ service cloud.firestore {
     </div>
   </div>
   <div class="form-card">
-    <div class="form-card-title">🚚 Ritiro / Consegna</div>
+    <div class="form-card-title">🏪 Ritiro</div>
     <div class="form-row triple">
-      <div class="form-group"><label>Tipo *</label><select id="f-tipo" onchange="toggleIndirizzo()"><option value="ritiro">🏪 Ritiro in negozio</option><option value="consegna">🚚 Consegna a domicilio</option></select></div>
+      <div class="form-group"><label>Luogo di ritiro *</label><select id="f-luogo"><option value="reve">📍 Reve</option><option value="efurner">📍 Efurner</option></select></div>
       <div class="form-group"><label>Data *</label><input type="date" id="f-data"></div>
-      <div class="form-group"><label>Ora</label><input type="time" id="f-ora"></div>
-    </div>
-    <div class="form-row single" id="indirizzoRow" style="display:none">
-      <div class="form-group"><label>Indirizzo</label><input type="text" id="f-indirizzo" placeholder="Via, numero civico, città…"></div>
+      <div class="form-group"><label>Ora ritiro</label><input type="time" id="f-ora"></div>
     </div>
   </div>
   <div class="form-card">
@@ -551,6 +571,7 @@ let _currentPage = 'dashboard';
 let _currentDetailId = null;
 let _sortAsc = false;
 let _pfFiltro = 'tutti';
+let _pfRep = '';
 let _pfFmt = 'stampa';
 let _prodottoId = 0;
 let _unsubscribe = null;
@@ -723,20 +744,20 @@ function genId(){
 
 function getSampleData(){
   return [
-    {id:'ORD-0001',createdAt:Date.now()-86400000*2,stato:'pronto',
+    {id:'ORD-0001',createdAt:Date.now()-86400000*2,stato:'pronto',reparto:'pasticceria',
      cliente:{nome:'Maria Bianchi',telefono:'333 1122334',noteCliente:'Allergia alle noci'},
-     consegna:{tipo:'ritiro',data:todayStr(),ora:'10:30',indirizzo:''},
-     prodotti:[{categoria:'torte',nome:'Torta di compleanno cioccolato',quantita:1},{categoria:'pane',nome:'Pane di farro',quantita:3}],
+     consegna:{luogo:'reve',data:todayStr(),ora:'10:30'},
+     prodotti:[{categoria:'torte',nome:'Torta di compleanno cioccolato',quantita:1},{categoria:'pasticceria',nome:'Cannoli siciliani',quantita:6}],
      noteOrdine:'Scritta: "Buon compleanno Marco!"'},
-    {id:'ORD-0002',createdAt:Date.now()-3600000,stato:'ricevuto',
+    {id:'ORD-0002',createdAt:Date.now()-3600000,stato:'ricevuto',reparto:'forno',
      cliente:{nome:'Luigi Verdi',telefono:'347 5566778',noteCliente:''},
-     consegna:{tipo:'consegna',data:offsetDate(todayStr(),1),ora:'12:00',indirizzo:'Via Roma 15, Milano'},
-     prodotti:[{categoria:'pizza',nome:'Pizza rossa al taglio',quantita:6},{categoria:'pizza',nome:'Focaccia farcita',quantita:4}],
+     consegna:{luogo:'efurner',data:offsetDate(todayStr(),1),ora:'12:00'},
+     prodotti:[{categoria:'pizza',nome:'Pizza rossa al taglio',quantita:6},{categoria:'pane',nome:'Pane di farro',quantita:3}],
      noteOrdine:'Evento aziendale'},
-    {id:'ORD-0003',createdAt:Date.now()-7200000,stato:'in_preparazione',
+    {id:'ORD-0003',createdAt:Date.now()-7200000,stato:'in_preparazione',reparto:'forno',
      cliente:{nome:'Sara Conti',telefono:'389 9988776',noteCliente:''},
-     consegna:{tipo:'ritiro',data:offsetDate(todayStr(),2),ora:'09:00',indirizzo:''},
-     prodotti:[{categoria:'catering',nome:'Buffet dolce 30 persone',quantita:1},{categoria:'pane',nome:'Grissini assortiti',quantita:5}],
+     consegna:{luogo:'reve',data:offsetDate(todayStr(),2),ora:'09:00'},
+     prodotti:[{categoria:'catering',nome:'Buffet salato 30 persone',quantita:1},{categoria:'pane',nome:'Grissini assortiti',quantita:5}],
      noteOrdine:'Matrimonio – allestimento alle 8:30'}
   ];
 }
@@ -800,10 +821,11 @@ function renderMiniList(id,ordini,icon,msg){
   c.innerHTML=ordini.map(o=>{
     const ps=(o.prodotti||[]).slice(0,2).map(p=>`${p.quantita}x ${p.nome}`).join(', ')+((o.prodotti||[]).length>2?'…':'');
     const dl=o.consegna?.data===todayStr()?'Oggi':formatDate(o.consegna?.data);
-    return`<div class="order-mini" onclick="apriDettaglio('${o.id}')">
+    const rep=o.reparto||'forno';
+    return`<div class="order-mini rep-accent ${rep}" onclick="apriDettaglio('${o.id}')">
       <div class="orario">${o.consegna?.ora||'--:--'}</div>
-      <div class="info"><div class="cliente-name">${esc(o.cliente?.nome||'—')}</div><div class="prodotti-short">${esc(ps)||'Nessun prodotto'}</div></div>
-      <div class="right"><div class="tipo-badge">${o.consegna?.tipo==='consegna'?'🚚':'🏪'} ${dl}</div><div style="margin-top:3px">${badgeStato(o.stato)}</div></div>
+      <div class="info"><div class="cliente-name">${repartoBadge(rep)} ${esc(o.cliente?.nome||'—')}</div><div class="prodotti-short">${esc(ps)||'Nessun prodotto'}</div></div>
+      <div class="right"><div class="tipo-badge">📍 ${luogoLabel(o.consegna?.luogo)} · ${dl}</div><div style="margin-top:3px">${badgeStato(o.stato)}</div></div>
     </div>`;
   }).join('');
 }
@@ -814,8 +836,10 @@ function renderOrdini(){
   const search=document.getElementById('searchInput').value.toLowerCase();
   const stato=document.getElementById('filterStato').value;
   const periodo=document.getElementById('filterPeriodo').value;
+  const reparto=document.getElementById('filterReparto').value;
   const oggi=todayStr();
   if(search)ordini=ordini.filter(o=>(o.cliente?.nome||'').toLowerCase().includes(search)||o.id.toLowerCase().includes(search)||(o.cliente?.telefono||'').includes(search));
+  if(reparto)ordini=ordini.filter(o=>(o.reparto||'forno')===reparto);
   if(stato)ordini=ordini.filter(o=>o.stato===stato);
   if(periodo==='oggi')ordini=ordini.filter(o=>o.consegna?.data===oggi);
   else if(periodo==='domani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,1));
@@ -830,10 +854,12 @@ function renderOrdini(){
   tbody.innerHTML=ordini.map(o=>{
     const pl=(o.prodotti||[]).slice(0,2).map(p=>`<span class="badge-cat ${p.categoria}">${catEmoji(p.categoria)} ${esc(p.nome.substring(0,16))} ×${p.quantita}</span>`).join(' ');
     const more=(o.prodotti||[]).length>2?`<span style="font-size:11px;color:var(--muted)">+${(o.prodotti||[]).length-2}</span>`:'';
+    const rep=o.reparto||'forno';
     return`<tr class="clickable" onclick="apriDettaglio('${o.id}')">
-      <td><code style="font-size:12px;background:#f5ede3;padding:2px 6px;border-radius:4px">${o.id}</code></td>
+      <td class="rep-accent ${rep}"><code style="font-size:12px;background:#f5ede3;padding:2px 6px;border-radius:4px">${o.id}</code></td>
+      <td>${repartoBadge(rep)}</td>
       <td><div style="font-weight:600">${esc(o.cliente?.nome||'—')}</div><div style="font-size:12px;color:var(--muted)">${esc(o.cliente?.telefono||'')}</div></td>
-      <td><div style="font-weight:600">${formatDate(o.consegna?.data)}</div><div style="font-size:12px;color:var(--muted)">${o.consegna?.ora?'🕐 '+o.consegna.ora:''} ${o.consegna?.tipo==='consegna'?'🚚':'🏪'}</div></td>
+      <td><div style="font-weight:600">${formatDate(o.consegna?.data)}</div><div style="font-size:12px;color:var(--muted)">${o.consegna?.ora?'🕐 '+o.consegna.ora:''} 📍 ${luogoLabel(o.consegna?.luogo)}</div></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap">${pl} ${more}</div></td>
       <td>${badgeStato(o.stato)}</td>
       <td><div style="display:flex;gap:6px">
@@ -854,7 +880,7 @@ function apriDettaglio(id){
   _currentDetailId=id;_currentPage='dettaglio';
   document.getElementById('d-id').textContent=o.id+' — creato il '+formatDateTime(o.createdAt);
   document.getElementById('d-cliente').textContent=o.cliente?.nome||'—';
-  document.getElementById('d-stato-badge').innerHTML=badgeStato(o.stato);
+  document.getElementById('d-stato-badge').innerHTML=repartoBadge(o.reparto)+' '+badgeStato(o.stato);
   document.getElementById('d-edit-btn').onclick=()=>editOrdine(id);
   document.getElementById('d-delete-btn').onclick=()=>confirmDelete(id);
   const steps=[{k:'ricevuto',l:'Ricevuto',i:'📥'},{k:'in_preparazione',l:'Preparazione',i:'🔥'},{k:'pronto',l:'Pronto',i:'✅'},{k:'consegnato',l:'Consegnato',i:'📦'}];
@@ -865,11 +891,11 @@ function apriDettaglio(id){
     return`<div style="display:flex;align-items:center;gap:0"><div style="display:flex;flex-direction:column;align-items:center"><div class="step-dot ${cls}" onclick="quickStato('${s.k}')" title="${s.l}">${s.i}</div><div class="step-label">${s.l}</div></div>${i<steps.length-1?`<div class="step-line ${lc}"></div>`:''}</div>`;
   }).join('');
   document.getElementById('d-info-grid').innerHTML=`
-    <div class="info-block"><div class="label">Tipo</div><div class="value">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
+    <div class="info-block"><div class="label">Reparto</div><div class="value">${repartoEmoji(o.reparto)} ${repartoLabel(o.reparto)}</div></div>
+    <div class="info-block"><div class="label">Luogo ritiro</div><div class="value">📍 ${luogoLabel(o.consegna?.luogo)}</div></div>
     <div class="info-block"><div class="label">Data</div><div class="value">${formatDate(o.consegna?.data)||'—'}</div></div>
-    <div class="info-block"><div class="label">Ora ${o.consegna?.tipo==='consegna'?'consegna':'ritiro'}</div><div class="value big">${o.consegna?.ora||'—'}</div></div>
-    <div class="info-block"><div class="label">Telefono</div><div class="value"><a href="tel:${o.cliente?.telefono}" style="color:var(--primary)">${o.cliente?.telefono||'—'}</a></div></div>
-    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="info-block"><div class="label">Indirizzo</div><div class="value" style="font-size:13px">${esc(o.consegna.indirizzo)}</div></div>`:''}`;
+    <div class="info-block"><div class="label">Ora ritiro</div><div class="value big">${o.consegna?.ora||'—'}</div></div>
+    <div class="info-block"><div class="label">Telefono</div><div class="value"><a href="tel:${o.cliente?.telefono}" style="color:var(--primary)">${o.cliente?.telefono||'—'}</a></div></div>`;
   document.getElementById('d-prodotti').innerHTML=(o.prodotti||[]).map(p=>`<tr>
     <td><span class="badge-cat ${p.categoria}">${catEmoji(p.categoria)} ${catLabel(p.categoria)}</span></td>
     <td style="font-weight:500">${esc(p.nome)}</td>
@@ -896,7 +922,7 @@ function nuovoOrdine(){
   document.getElementById('formTitle').textContent='Nuovo Ordine';
   document.getElementById('formId').textContent='';
   document.getElementById('f-edit-id').value='';
-  resetForm();selectStato('ricevuto');
+  resetForm();selectStato('ricevuto');selectReparto('forno');
   document.getElementById('f-data').value=todayStr();
   addProdotto();showPage('form');
 }
@@ -906,15 +932,13 @@ function editOrdine(id){
   document.getElementById('formTitle').textContent='Modifica Ordine';
   document.getElementById('formId').textContent=o.id;
   document.getElementById('f-edit-id').value=o.id;
-  resetForm();selectStato(o.stato||'ricevuto');
+  resetForm();selectStato(o.stato||'ricevuto');selectReparto(o.reparto||'forno');
   document.getElementById('f-nome').value=o.cliente?.nome||'';
   document.getElementById('f-telefono').value=o.cliente?.telefono||'';
   document.getElementById('f-note-cliente').value=o.cliente?.noteCliente||'';
-  document.getElementById('f-tipo').value=o.consegna?.tipo||'ritiro';
+  document.getElementById('f-luogo').value=o.consegna?.luogo||'reve';
   document.getElementById('f-data').value=o.consegna?.data||'';
   document.getElementById('f-ora').value=o.consegna?.ora||'';
-  document.getElementById('f-indirizzo').value=o.consegna?.indirizzo||'';
-  toggleIndirizzo();
   document.getElementById('f-note-ordine').value=o.noteOrdine||'';
   document.getElementById('prodottiList').innerHTML='';
   (o.prodotti||[]).forEach(p=>addProdotto(p));
@@ -923,11 +947,10 @@ function editOrdine(id){
 }
 
 function resetForm(){
-  ['f-nome','f-telefono','f-note-cliente','f-indirizzo','f-note-ordine'].forEach(id=>{document.getElementById(id).value='';});
-  document.getElementById('f-tipo').value='ritiro';
+  ['f-nome','f-telefono','f-note-cliente','f-note-ordine'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-luogo').value='reve';
   document.getElementById('f-ora').value='';
   document.getElementById('prodottiList').innerHTML='';
-  toggleIndirizzo();
 }
 
 function selectStato(stato){
@@ -935,7 +958,10 @@ function selectStato(stato){
   document.querySelectorAll('#statoSelector .stato-opt').forEach(el=>el.classList.toggle('selected',el.dataset.stato===stato));
 }
 
-function toggleIndirizzo(){document.getElementById('indirizzoRow').style.display=document.getElementById('f-tipo').value==='consegna'?'grid':'none';}
+function selectReparto(reparto){
+  document.getElementById('f-reparto').value=reparto;
+  document.querySelectorAll('#repartoSelector .reparto-opt').forEach(el=>el.classList.toggle('selected',el.dataset.reparto===reparto));
+}
 
 function addProdotto(data){
   const id=++_prodottoId;
@@ -974,9 +1000,10 @@ async function salvaOrdine(){
     id:editId||genId(),
     createdAt:editId?(loadOrdini().find(o=>o.id===editId)?.createdAt||Date.now()):Date.now(),
     updatedAt:Date.now(),
+    reparto:document.getElementById('f-reparto').value,
     stato:document.getElementById('f-stato').value,
     cliente:{nome,telefono:document.getElementById('f-telefono').value.trim(),noteCliente:document.getElementById('f-note-cliente').value.trim()},
-    consegna:{tipo:document.getElementById('f-tipo').value,data,ora:document.getElementById('f-ora').value,indirizzo:document.getElementById('f-indirizzo').value.trim()},
+    consegna:{luogo:document.getElementById('f-luogo').value,data,ora:document.getElementById('f-ora').value},
     prodotti:getProdottiFromForm(),
     noteOrdine:document.getElementById('f-note-ordine').value.trim()
   };
@@ -1004,21 +1031,22 @@ function closeModal(){document.getElementById('modalOverlay').style.display='non
 
 // ═══════════════════════════ PRINT / EXPORT ═══════════════════════════
 function apriModalStampa(){
-  _pfFiltro='tutti';_pfFmt='stampa';
-  document.querySelectorAll('.pf-option').forEach(el=>el.classList.toggle('selected',el.dataset.filtro==='tutti'));
+  _pfFiltro='tutti';_pfRep='';_pfFmt='stampa';
+  document.querySelectorAll('#pfGrid .pf-option').forEach(el=>el.classList.toggle('selected',el.dataset.filtro==='tutti'));
+  document.querySelectorAll('#pfRepGrid .pf-option').forEach(el=>el.classList.toggle('selected',el.dataset.rep===''));
   document.querySelectorAll('.fmt-btn').forEach(el=>el.classList.remove('selected'));
   document.getElementById('fmtStampa').classList.add('selected');
-  document.getElementById('pfDateRow').style.display='none';
-  document.getElementById('pfDa').value=todayStr();
-  document.getElementById('pfA').value=todayStr();
   document.getElementById('fmtDesc').textContent='Stampa la lista ordini in formato tabellare.';
   document.getElementById('modalStampaOverlay').style.display='flex';
 }
 function closeModalStampa(){document.getElementById('modalStampaOverlay').style.display='none';}
 function selectPF(el){
   _pfFiltro=el.dataset.filtro;
-  document.querySelectorAll('.pf-option').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');
-  document.getElementById('pfDateRow').style.display=_pfFiltro==='date'?'grid':'none';
+  document.querySelectorAll('#pfGrid .pf-option').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');
+}
+function selectPFRep(el){
+  _pfRep=el.dataset.rep;
+  document.querySelectorAll('#pfRepGrid .pf-option').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');
 }
 function selectFmt(fmt){
   _pfFmt=fmt;document.querySelectorAll('.fmt-btn').forEach(e=>e.classList.remove('selected'));
@@ -1027,15 +1055,21 @@ function selectFmt(fmt){
   document.getElementById('fmtDesc').textContent=map[fmt]||'';
 }
 
+function pfFiltroLabel(){
+  const base={tutti:'Tutti gli ordini',domani:'Da preparare — Domani',dopodomani:'Da preparare — Dopodomani'}[_pfFiltro]||'Tutti';
+  const rep=_pfRep?(' · '+(_pfRep==='pasticceria'?'Pasticceria':'Forno')):'';
+  return base+rep;
+}
+
 function getOrdiniPerOutput(){
   const oggi=todayStr();
+  const daPreparare=o=>o.stato==='ricevuto'||o.stato==='in_preparazione';
   let ordini=loadOrdini();
-  if(_pfFiltro==='da_fare')ordini=ordini.filter(o=>o.stato==='ricevuto'||o.stato==='in_preparazione');
-  else if(_pfFiltro==='pronto')ordini=ordini.filter(o=>o.stato==='pronto');
-  else if(_pfFiltro==='consegnato')ordini=ordini.filter(o=>o.stato==='consegnato');
-  else if(_pfFiltro==='oggi')ordini=ordini.filter(o=>o.consegna?.data===oggi);
-  else if(_pfFiltro==='date'){const da=document.getElementById('pfDa').value,a=document.getElementById('pfA').value;ordini=ordini.filter(o=>o.consegna?.data>=da&&o.consegna?.data<=a);}
-  return ordini.sort((a,b)=>(a.consegna?.data||'').localeCompare(b.consegna?.data||'')||(a.consegna?.ora||'').localeCompare(b.consegna?.ora||''));
+  if(_pfFiltro==='domani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,1)&&daPreparare(o));
+  else if(_pfFiltro==='dopodomani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,2)&&daPreparare(o));
+  else ordini=ordini.filter(o=>o.stato!=='annullato');
+  if(_pfRep)ordini=ordini.filter(o=>(o.reparto||'forno')===_pfRep);
+  return ordini.sort((a,b)=>(a.consegna?.data||'').localeCompare(b.consegna?.data||'')||(a.consegna?.ora||'').localeCompare(b.consegna?.ora||'')||((a.reparto||'forno').localeCompare(b.reparto||'forno')));
 }
 
 function eseguiOutput(){
@@ -1048,15 +1082,15 @@ function eseguiOutput(){
 }
 
 function stampaLista(ordini){
-  const fl={tutti:'Tutti',da_fare:'Da preparare',pronto:'Pronti',consegnato:'Evasi',oggi:'Oggi',date:'Intervallo date'}[_pfFiltro]||'Tutti';
+  const fl=pfFiltroLabel();
   const html=`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Lista Ordini</title>
-  <style>body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;margin:20px}h1{font-size:16pt;color:#c0622a;margin-bottom:3px}.sub{font-size:9pt;color:#888;margin-bottom:14px}table{width:100%;border-collapse:collapse}thead tr{background:#c0622a;color:#fff}th{padding:8px 9px;text-align:left;font-size:9pt;font-weight:700}td{padding:7px 9px;font-size:9pt;border-bottom:1px solid #e8ddd0;vertical-align:top}tr:nth-child(even)td{background:#fdf8f3}.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8pt;font-weight:700}.ricevuto{background:#dceafa;color:#2a6cc0}.in_preparazione{background:#fdf3e0;color:#8a5c00}.pronto{background:#d8f2e6;color:#2d8a5a}.consegnato{background:#f0f0f0;color:#444}.annullato{background:#fde8e8;color:#c03030}.tot{background:#faeada;font-weight:700}@media print{body{margin:0}}</style></head><body>
-  <h1>🍞 Lista Ordini – Forno</h1>
+  <style>body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;margin:20px}h1{font-size:16pt;color:#c0622a;margin-bottom:3px}.sub{font-size:9pt;color:#888;margin-bottom:14px}table{width:100%;border-collapse:collapse}thead tr{background:#c0622a;color:#fff}th{padding:8px 9px;text-align:left;font-size:9pt;font-weight:700}td{padding:7px 9px;font-size:9pt;border-bottom:1px solid #e8ddd0;vertical-align:top}tr:nth-child(even)td{background:#fdf8f3}.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8pt;font-weight:700}.ricevuto{background:#dceafa;color:#2a6cc0}.in_preparazione{background:#fdf3e0;color:#8a5c00}.pronto{background:#d8f2e6;color:#2d8a5a}.consegnato{background:#f0f0f0;color:#444}.annullato{background:#fde8e8;color:#c03030}.rep-forno{background:#fae8dc;color:#a3501f}.rep-pasticceria{background:#fde8f0;color:#b02860}.tot{background:#faeada;font-weight:700}@media print{body{margin:0}}</style></head><body>
+  <h1>🍞 Lista Ordini – Efurner</h1>
   <div class="sub">Filtro: <strong>${fl}</strong> | Generato: ${new Date().toLocaleString('it-IT')} | Tot. ordini: <strong>${ordini.length}</strong></div>
-  <table><thead><tr><th>ID</th><th>Cliente</th><th>Tel.</th><th>Data</th><th>Ora ritiro</th><th>Tipo</th><th>Prodotti</th><th>Stato</th><th>Note</th></tr></thead><tbody>
-  ${ordini.map(o=>{const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');
-  return`<tr><td><strong>${o.id}</strong></td><td><strong>${o.cliente?.nome||'—'}</strong>${o.cliente?.noteCliente?'<br><small style="color:#888">'+o.cliente.noteCliente+'</small>':''}</td><td>${o.cliente?.telefono||'—'}</td><td>${formatDate(o.consegna?.data)}</td><td style="font-weight:700">${o.consegna?.ora||'—'}</td><td>${o.consegna?.tipo==='consegna'?'🚚 Cons.':'🏪 Ritiro'}</td><td>${ps||'—'}</td><td><span class="badge ${o.stato}">${statoLabel(o.stato)}</span></td><td style="font-size:8pt;color:#666">${o.noteOrdine||'—'}</td></tr>`;}).join('')}
-  </tbody><tfoot><tr class="tot"><td colspan="9" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr></tfoot></table>
+  <table><thead><tr><th>ID</th><th>Reparto</th><th>Cliente</th><th>Tel.</th><th>Data</th><th>Ora ritiro</th><th>Luogo</th><th>Prodotti</th><th>Stato</th><th>Note</th></tr></thead><tbody>
+  ${ordini.map(o=>{const rep=o.reparto||'forno';const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');
+  return`<tr><td><strong>${o.id}</strong></td><td><span class="badge rep-${rep}">${repartoEmoji(rep)} ${rep==='pasticceria'?'Pasticc.':'Forno'}</span></td><td><strong>${o.cliente?.nome||'—'}</strong>${o.cliente?.noteCliente?'<br><small style="color:#888">'+o.cliente.noteCliente+'</small>':''}</td><td>${o.cliente?.telefono||'—'}</td><td>${formatDate(o.consegna?.data)}</td><td style="font-weight:700">${o.consegna?.ora||'—'}</td><td>📍 ${luogoLabel(o.consegna?.luogo)}</td><td>${ps||'—'}</td><td><span class="badge ${o.stato}">${statoLabel(o.stato)}</span></td><td style="font-size:8pt;color:#666">${o.noteOrdine||'—'}</td></tr>`;}).join('')}
+  </tbody><tfoot><tr class="tot"><td colspan="10" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr></tfoot></table>
   <script>window.onload=()=>window.print();<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
 }
@@ -1065,49 +1099,49 @@ function stampaFogliLavorazione(ordini){
   const stTxt={ricevuto:'Ricevuto',in_preparazione:'In prep.',pronto:'Pronto',consegnato:'Consegnato'};
   const html=`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Fogli Lavorazione</title>
   <style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0}.foglio{padding:24px 28px;page-break-after:always;border:3px solid #c0622a;min-height:96vh;box-sizing:border-box}.foglio:last-child{page-break-after:avoid}.fh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #c0622a;padding-bottom:12px;margin-bottom:16px}.logo{font-size:20pt;font-weight:900;color:#c0622a}.fid{background:#c0622a;color:#fff;padding:5px 14px;border-radius:7px;font-size:13pt;font-weight:700}.cn{font-size:18pt;font-weight:900;margin-bottom:5px}.tel{font-size:12pt;color:#555;margin-bottom:14px}.strip{display:flex;gap:14px;background:#fdf8f3;border:2px solid #e8ddd0;border-radius:8px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap}.si{display:flex;flex-direction:column}.si .l{font-size:8pt;font-weight:700;text-transform:uppercase;color:#8a6f55;letter-spacing:.5px}.si .v{font-size:12pt;font-weight:700}.si .vb{font-size:15pt!important;color:#c0622a}table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background:#c0622a;color:#fff}th{padding:8px 11px;text-align:left;font-size:10pt}td{padding:9px 11px;font-size:10pt;border-bottom:2px solid #e8ddd0}tr:nth-child(even)td{background:#fdf8f3}.qty{font-size:15pt;font-weight:900;color:#c0622a;text-align:center}.nb{border:2px dashed #e8a44a;border-radius:8px;padding:10px 14px;background:#fdf3e0;margin-bottom:14px}.nb .nt{font-weight:800;margin-bottom:5px;color:#8a5c00}.tl{display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:2px solid #e8ddd0}.ts{flex:1;text-align:center;padding:9px 5px;border:2px solid #e8ddd0;border-radius:7px;font-size:9pt;font-weight:700}.ts.a{background:#c0622a;color:#fff;border-color:#c0622a}.ts.d{background:#d8f2e6;border-color:#2d8a5a;color:#2d8a5a}.fr{display:flex;gap:18px;margin-top:18px}.fb{flex:1;border-bottom:2px solid #555;padding-bottom:28px}.fl{font-size:9pt;color:#888;margin-top:5px}@media print{.foglio{border:3px solid #c0622a!important}}</style></head><body>
-  ${ordini.map(o=>{const idx=['ricevuto','in_preparazione','pronto','consegnato'].indexOf(o.stato);const steps=['📥 Ricevuto','🔥 In prep.','✅ Pronto','📦 Consegnato'];
-  return`<div class="foglio"><div class="fh"><div class="logo">🍞 Forno</div><div class="fid">${o.id}</div></div>
+  ${ordini.map(o=>{const rep=o.reparto||'forno';const repC=rep==='pasticceria'?'#b02860':'#c0622a';const idx=['ricevuto','in_preparazione','pronto','consegnato'].indexOf(o.stato);const steps=['📥 Ricevuto','🔥 In prep.','✅ Pronto','📦 Consegnato'];
+  return`<div class="foglio" style="border-color:${repC}"><div class="fh" style="border-color:${repC}"><div class="logo" style="color:${repC}">${repartoEmoji(rep)} ${repartoLabel(rep)}</div><div class="fid" style="background:${repC}">${o.id}</div></div>
   <div class="cn">${o.cliente?.nome||'—'}</div><div class="tel">📞 ${o.cliente?.telefono||'—'}</div>
   <div class="strip">
     <div class="si"><div class="l">Data</div><div class="v vb">${formatDate(o.consegna?.data)}</div></div>
-    <div class="si"><div class="l">Ora ${o.consegna?.tipo==='consegna'?'consegna':'ritiro'}</div><div class="v vb">${o.consegna?.ora||'—'}</div></div>
-    <div class="si"><div class="l">Tipo</div><div class="v">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
-    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="si"><div class="l">Indirizzo</div><div class="v" style="font-size:10pt">${o.consegna.indirizzo}</div></div>`:''}
+    <div class="si"><div class="l">Ora ritiro</div><div class="v vb">${o.consegna?.ora||'—'}</div></div>
+    <div class="si"><div class="l">Luogo ritiro</div><div class="v">📍 ${luogoLabel(o.consegna?.luogo)}</div></div>
   </div>
   <table><thead><tr><th>Categoria</th><th>Prodotto</th><th style="text-align:center">Q.tà</th></tr></thead><tbody>
   ${(o.prodotti||[]).map(p=>`<tr><td>${{pane:'🍞 Pane',torte:'🎂 Torte',pasticceria:'🍰 Pasticceria',pizza:'🍕 Pizza',catering:'🎉 Catering',altro:'📦 Altro'}[p.categoria]||p.categoria}</td><td style="font-weight:700">${p.nome}</td><td class="qty">${p.quantita}</td></tr>`).join('')}
   </tbody></table>
   ${(o.noteOrdine||o.cliente?.noteCliente)?`<div class="nb"><div class="nt">⚠️ NOTE IMPORTANTI</div>${o.cliente?.noteCliente?'<div>Cliente: '+o.cliente.noteCliente+'</div>':''}${o.noteOrdine?'<div>Ordine: '+o.noteOrdine+'</div>':''}</div>`:''}
   <div class="tl">${steps.map((s,i)=>`<div class="ts ${i<idx?'d':i===idx?'a':''}">${s}</div>`).join('')}</div>
-  <div class="fr"><div class="fb"><div class="fl">Preparato da</div></div><div class="fb"><div class="fl">Controllato da</div></div><div class="fb"><div class="fl">Consegnato / Ritirato</div></div></div>
+  <div class="fr"><div class="fb"><div class="fl">Preparato da</div></div><div class="fb"><div class="fl">Controllato da</div></div><div class="fb"><div class="fl">Ritirato da</div></div></div>
   </div>`;}).join('')}
   <script>window.onload=()=>window.print();<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
 }
 
 function esportaExcel(ordini){
-  const fl={tutti:'Tutti',da_fare:'Da preparare',pronto:'Pronti',consegnato:'Evasi',oggi:'Oggi',date:'Intervallo'}[_pfFiltro]||'Tutti';
+  const fl=pfFiltroLabel();
   const sc={ricevuto:{bg:'#dceafa',fg:'#2a6cc0'},in_preparazione:{bg:'#fdf3e0',fg:'#8a5c00'},pronto:{bg:'#d8f2e6',fg:'#2d8a5a'},consegnato:{bg:'#f0f0f0',fg:'#444'},annullato:{bg:'#fde8e8',fg:'#c03030'}};
   const st={ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'};
   const ct={pane:'Pane',torte:'Torte',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'};
+  const rc={forno:{bg:'#fae8dc',fg:'#a3501f'},pasticceria:{bg:'#fde8f0',fg:'#b02860'}};
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
   <head><meta charset="UTF-8"><style>td,th{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;border:1px solid #d4c8b8;padding:7px 9px}.hdr{background:#c0622a;color:#fff;font-weight:700;font-size:11pt}.hdr2{background:#7a3fb5;color:#fff;font-weight:700}.re{background:#fdf8f3}.ev{background:#fff}.tot{background:#faeada;font-weight:700}.ti{font-size:15pt;font-weight:900;color:#c0622a;border:none}.su{font-size:9pt;color:#888;border:none}.num{text-align:right}.ctr{text-align:center}</style></head><body>
   <table>
-  <tr><td class="ti" colspan="9">🍞 GESTIONALE ORDINI – FORNO</td></tr>
-  <tr><td class="su" colspan="9">Filtro: ${fl} | Generato: ${new Date().toLocaleString('it-IT')} | Ordini: ${ordini.length}</td></tr>
-  <tr><td colspan="9" style="border:none">&nbsp;</td></tr>
-  <tr><td class="hdr">ID</td><td class="hdr">Cliente</td><td class="hdr">Telefono</td><td class="hdr">Data</td><td class="hdr ctr">Ora ritiro</td><td class="hdr">Tipo</td><td class="hdr">Prodotti</td><td class="hdr ctr">Stato</td><td class="hdr">Note</td></tr>
-  ${ordini.map((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');const cls=i%2?'re':'ev';
-  return`<tr><td class="${cls}" style="font-weight:700">${o.id}</td><td class="${cls}" style="font-weight:700">${o.cliente?.nome||'—'}</td><td class="${cls}">${o.cliente?.telefono||'—'}</td><td class="${cls}" style="font-weight:700">${formatDate(o.consegna?.data)}</td><td class="${cls} ctr" style="font-weight:700">${o.consegna?.ora||'—'}</td><td class="${cls}">${o.consegna?.tipo==='consegna'?'Consegna':'Ritiro'}</td><td class="${cls}" style="font-size:9pt">${ps||'—'}</td><td class="${cls} ctr" style="background:${c.bg};color:${c.fg};font-weight:700">${st[o.stato]||o.stato}</td><td class="${cls}" style="font-size:9pt">${o.noteOrdine||''}</td></tr>`;}).join('')}
-  <tr class="tot"><td colspan="9" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr>
+  <tr><td class="ti" colspan="10">🍞 GESTIONALE ORDINI – EFURNER</td></tr>
+  <tr><td class="su" colspan="10">Filtro: ${fl} | Generato: ${new Date().toLocaleString('it-IT')} | Ordini: ${ordini.length}</td></tr>
+  <tr><td colspan="10" style="border:none">&nbsp;</td></tr>
+  <tr><td class="hdr">ID</td><td class="hdr ctr">Reparto</td><td class="hdr">Cliente</td><td class="hdr">Telefono</td><td class="hdr">Data</td><td class="hdr ctr">Ora ritiro</td><td class="hdr">Luogo</td><td class="hdr">Prodotti</td><td class="hdr ctr">Stato</td><td class="hdr">Note</td></tr>
+  ${ordini.map((o,i)=>{const rep=o.reparto||'forno';const r=rc[rep];const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');const cls=i%2?'re':'ev';
+  return`<tr><td class="${cls}" style="font-weight:700">${o.id}</td><td class="${cls} ctr" style="background:${r.bg};color:${r.fg};font-weight:700">${repartoLabel(rep)}</td><td class="${cls}" style="font-weight:700">${o.cliente?.nome||'—'}</td><td class="${cls}">${o.cliente?.telefono||'—'}</td><td class="${cls}" style="font-weight:700">${formatDate(o.consegna?.data)}</td><td class="${cls} ctr" style="font-weight:700">${o.consegna?.ora||'—'}</td><td class="${cls}">${luogoLabel(o.consegna?.luogo)}</td><td class="${cls}" style="font-size:9pt">${ps||'—'}</td><td class="${cls} ctr" style="background:${c.bg};color:${c.fg};font-weight:700">${st[o.stato]||o.stato}</td><td class="${cls}" style="font-size:9pt">${o.noteOrdine||''}</td></tr>`;}).join('')}
+  <tr class="tot"><td colspan="10" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr>
   </table><br><br>
-  <table><tr><td class="ti" colspan="8">📋 DETTAGLIO PRODOTTI</td></tr><tr><td colspan="8" style="border:none">&nbsp;</td></tr>
-  <tr><td class="hdr2">ID</td><td class="hdr2">Cliente</td><td class="hdr2">Data</td><td class="hdr2 ctr">Ora ritiro</td><td class="hdr2 ctr">Stato</td><td class="hdr2">Categoria</td><td class="hdr2">Prodotto</td><td class="hdr2 ctr">Q.tà</td></tr>
-  ${ordini.flatMap((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const cls=i%2?'re':'ev';return(o.prodotti||[]).map((p,j)=>`<tr><td class="${cls}" style="font-weight:700">${j===0?o.id:''}</td><td class="${cls}">${j===0?(o.cliente?.nome||'—'):''}</td><td class="${cls}">${j===0?formatDate(o.consegna?.data):''}</td><td class="${cls} ctr" style="font-weight:700">${j===0?(o.consegna?.ora||'—'):''}</td><td class="${cls}" style="${j===0?'background:'+c.bg+';color:'+c.fg+';font-weight:700':''}">${j===0?(st[o.stato]||o.stato):''}</td><td class="${cls}">${ct[p.categoria]||p.categoria}</td><td class="${cls}" style="font-weight:600">${p.nome}</td><td class="${cls} ctr" style="font-weight:700">${p.quantita}</td></tr>`);}).join('')}
+  <table><tr><td class="ti" colspan="9">📋 DETTAGLIO PRODOTTI</td></tr><tr><td colspan="9" style="border:none">&nbsp;</td></tr>
+  <tr><td class="hdr2">ID</td><td class="hdr2 ctr">Reparto</td><td class="hdr2">Cliente</td><td class="hdr2">Data</td><td class="hdr2 ctr">Ora ritiro</td><td class="hdr2 ctr">Stato</td><td class="hdr2">Categoria</td><td class="hdr2">Prodotto</td><td class="hdr2 ctr">Q.tà</td></tr>
+  ${ordini.flatMap((o,i)=>{const rep=o.reparto||'forno';const r=rc[rep];const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const cls=i%2?'re':'ev';return(o.prodotti||[]).map((p,j)=>`<tr><td class="${cls}" style="font-weight:700">${j===0?o.id:''}</td><td class="${cls} ctr" style="${j===0?'background:'+r.bg+';color:'+r.fg+';font-weight:700':''}">${j===0?repartoLabel(rep):''}</td><td class="${cls}">${j===0?(o.cliente?.nome||'—'):''}</td><td class="${cls}">${j===0?formatDate(o.consegna?.data):''}</td><td class="${cls} ctr" style="font-weight:700">${j===0?(o.consegna?.ora||'—'):''}</td><td class="${cls}" style="${j===0?'background:'+c.bg+';color:'+c.fg+';font-weight:700':''}">${j===0?(st[o.stato]||o.stato):''}</td><td class="${cls}">${ct[p.categoria]||p.categoria}</td><td class="${cls}" style="font-weight:600">${p.nome}</td><td class="${cls} ctr" style="font-weight:700">${p.quantita}</td></tr>`);}).join('')}
   </table></body></html>`;
   const blob=new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=`Ordini_Forno_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xls`;
+  a.href=url;a.download=`Ordini_Efurner_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xls`;
   a.click();URL.revokeObjectURL(url);
   showToast(`Excel esportato (${ordini.length} ordini)`,'success');
 }
@@ -1192,6 +1226,10 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function escAttr(s){return String(s||'').replace(/"/g,'&quot;');}
 function badgeStato(stato){const map={ricevuto:'📥 Ricevuto',in_preparazione:'🔥 In preparazione',pronto:'✅ Pronto',consegnato:'📦 Consegnato',annullato:'❌ Annullato'};return`<span class="badge-stato ${stato}">${map[stato]||stato}</span>`;}
 function statoLabel(s){return{ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'}[s]||s;}
+function repartoLabel(r){return{forno:'Forno Efurner',pasticceria:'Pasticceria Efurner'}[r]||'Forno Efurner';}
+function repartoEmoji(r){return r==='pasticceria'?'🍰':'🍞';}
+function repartoBadge(r){r=r||'forno';return`<span class="badge-reparto ${r}">${repartoEmoji(r)} ${r==='pasticceria'?'Pasticceria':'Forno'}</span>`;}
+function luogoLabel(l){return{reve:'Reve',efurner:'Efurner'}[l]||'Reve';}
 function catEmoji(c){return{pane:'🍞',torte:'🎂',pasticceria:'🍰',pizza:'🍕',catering:'🎉',altro:'📦'}[c]||'📦';}
 function catLabel(c){return{pane:'Pane',torte:'Torte',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'}[c]||c;}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
