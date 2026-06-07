@@ -124,6 +124,7 @@ tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
 .badge-stato.annullato{background:var(--rl);color:var(--red)}
 .badge-cat{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:12px;font-weight:600}
 .badge-cat.pane{background:#fdecd5;color:#a05820}
+.badge-cat.torte{background:#f8e0ec;color:#b0306a}
 .badge-cat.pasticceria{background:#fde8f0;color:#b02860}
 .badge-cat.pizza{background:#fdf5d5;color:#8a7010}
 .badge-cat.catering{background:var(--pul);color:var(--purple)}
@@ -153,14 +154,14 @@ tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);background:#fff}
 .form-group textarea{resize:vertical;min-height:68px}
 .prodotti-list{display:flex;flex-direction:column;gap:9px}
-.prodotto-row{display:grid;grid-template-columns:130px 1fr 75px 95px 85px 34px;gap:7px;align-items:center;background:#fdf8f3;padding:9px 11px;border-radius:8px;border:1px solid var(--border)}
+.prodotto-row{display:grid;grid-template-columns:150px 1fr 90px 34px;gap:7px;align-items:center;background:#fdf8f3;padding:9px 11px;border-radius:8px;border:1px solid var(--border)}
 .prodotto-row select,.prodotto-row input{padding:6px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border .18s;width:100%;font-family:inherit}
 .prodotto-row select:focus,.prodotto-row input:focus{border-color:var(--primary)}
 .btn-del-prod{background:var(--rl);color:var(--red);border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0}
 .btn-del-prod:hover{background:#f8c0c0}
 .btn-add-prod{background:var(--pl);color:var(--primary);border:1.5px dashed var(--primary);border-radius:7px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:5px;transition:all .18s}
 .btn-add-prod:hover{background:var(--primary);color:#fff}
-.prodotto-labels{display:grid;grid-template-columns:130px 1fr 75px 95px 85px 34px;gap:7px;padding:0 11px;margin-bottom:4px}
+.prodotto-labels{display:grid;grid-template-columns:150px 1fr 90px 34px;gap:7px;padding:0 11px;margin-bottom:4px}
 .prodotto-labels span{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
 .totale-preview{text-align:right;font-size:14px;margin-top:9px;color:var(--muted)}
 .totale-preview strong{color:var(--primary);font-size:17px}
@@ -436,7 +437,7 @@ service cloud.firestore {
     <button class="sort-btn" id="sortBtn" onclick="toggleSort()">📅 Data ↕</button>
   </div>
   <div class="orders-table-wrap">
-    <table><thead><tr><th>ID</th><th>Cliente</th><th>Consegna</th><th>Prodotti</th><th>Totale</th><th>Stato</th><th>Azioni</th></tr></thead>
+    <table><thead><tr><th>ID</th><th>Cliente</th><th>Consegna</th><th>Prodotti</th><th>Stato</th><th>Azioni</th></tr></thead>
     <tbody id="ordiniTableBody"></tbody></table>
   </div>
   <div id="ordiniEmpty" class="empty-state" style="display:none"><div class="icon">📋</div><p>Nessun ordine trovato.</p></div>
@@ -467,8 +468,7 @@ service cloud.firestore {
       <div class="form-group"><label>Nome e Cognome *</label><input type="text" id="f-nome" placeholder="Es. Mario Rossi"></div>
       <div class="form-group"><label>Telefono *</label><input type="tel" id="f-telefono" placeholder="Es. 333 1234567"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="Es. mario@email.com"></div>
+    <div class="form-row single">
       <div class="form-group"><label>Note cliente</label><input type="text" id="f-note-cliente" placeholder="Es. Allergie, preferenze…"></div>
     </div>
   </div>
@@ -485,19 +485,9 @@ service cloud.firestore {
   </div>
   <div class="form-card">
     <div class="form-card-title">🛒 Prodotti</div>
-    <div class="prodotto-labels"><span>Categoria</span><span>Prodotto</span><span>Q.tà</span><span>Prezzo/u (€)</span><span>Subtotale</span><span></span></div>
+    <div class="prodotto-labels"><span>Categoria</span><span>Prodotto</span><span>Q.tà</span><span></span></div>
     <div class="prodotti-list" id="prodottiList"></div>
     <button class="btn-add-prod" onclick="addProdotto()">+ Aggiungi prodotto</button>
-    <div class="totale-preview">Totale: <strong id="totalePreview">€ 0,00</strong></div>
-  </div>
-  <div class="form-card">
-    <div class="form-card-title">💰 Pagamento</div>
-    <div class="pagamento-row">
-      <div class="form-group"><label>Totale (€)</label><input type="number" id="f-totale" min="0" step="0.01" placeholder="0,00" oninput="calcSaldo()"></div>
-      <div class="form-group"><label>Acconto (€)</label><input type="number" id="f-acconto" min="0" step="0.01" placeholder="0,00" oninput="calcSaldo()"></div>
-      <div class="form-group"><label>Metodo</label><select id="f-metodo"><option value="non specificato">Non specificato</option><option value="contanti">💵 Contanti</option><option value="carta">💳 Carta</option><option value="bonifico">🏦 Bonifico</option><option value="misto">🔄 Misto</option></select></div>
-    </div>
-    <div class="saldo-info" id="saldoInfo"></div>
   </div>
   <div class="form-card">
     <div class="form-card-title">📝 Note Ordine</div>
@@ -533,16 +523,11 @@ service cloud.firestore {
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:16px">
     <div style="padding:13px 17px;border-bottom:1px solid var(--border)"><div class="section-title" style="margin:0">🛒 Prodotti</div></div>
     <table class="prodotti-detail-table">
-      <thead><tr><th>Categoria</th><th>Prodotto</th><th>Q.tà</th><th>Prezzo/u</th><th>Subtotale</th><th>Note</th></tr></thead>
+      <thead><tr><th>Categoria</th><th>Prodotto</th><th>Q.tà</th><th>Note</th></tr></thead>
       <tbody id="d-prodotti"></tbody>
-      <tfoot><tr><td colspan="4" style="text-align:right">Totale</td><td id="d-totale-calc"></td><td></td></tr></tfoot>
     </table>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
-      <div class="section-title" style="margin-bottom:11px">💰 Pagamento</div>
-      <div id="d-pagamento"></div>
-    </div>
+  <div style="margin-bottom:16px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
       <div class="section-title" style="margin-bottom:11px">📝 Note</div>
       <div id="d-note" style="font-size:14px;color:var(--muted);line-height:1.6"></div>
@@ -739,20 +724,20 @@ function genId(){
 function getSampleData(){
   return [
     {id:'ORD-0001',createdAt:Date.now()-86400000*2,stato:'pronto',
-     cliente:{nome:'Maria Bianchi',telefono:'333 1122334',email:'',noteCliente:'Allergia alle noci'},
+     cliente:{nome:'Maria Bianchi',telefono:'333 1122334',noteCliente:'Allergia alle noci'},
      consegna:{tipo:'ritiro',data:todayStr(),ora:'10:30',indirizzo:''},
-     prodotti:[{categoria:'pasticceria',nome:'Torta di compleanno cioccolato',quantita:1,prezzo:35},{categoria:'pane',nome:'Pane di farro',quantita:3,prezzo:3.5}],
-     pagamento:{totale:45.5,acconto:20,metodo:'contanti'},noteOrdine:'Scritta: "Buon compleanno Marco!"'},
+     prodotti:[{categoria:'torte',nome:'Torta di compleanno cioccolato',quantita:1},{categoria:'pane',nome:'Pane di farro',quantita:3}],
+     noteOrdine:'Scritta: "Buon compleanno Marco!"'},
     {id:'ORD-0002',createdAt:Date.now()-3600000,stato:'ricevuto',
-     cliente:{nome:'Luigi Verdi',telefono:'347 5566778',email:'luigi@email.it',noteCliente:''},
+     cliente:{nome:'Luigi Verdi',telefono:'347 5566778',noteCliente:''},
      consegna:{tipo:'consegna',data:offsetDate(todayStr(),1),ora:'12:00',indirizzo:'Via Roma 15, Milano'},
-     prodotti:[{categoria:'pizza',nome:'Pizza rossa al taglio',quantita:6,prezzo:4},{categoria:'pizza',nome:'Focaccia farcita',quantita:4,prezzo:3.5}],
-     pagamento:{totale:38,acconto:0,metodo:'carta'},noteOrdine:'Evento aziendale'},
+     prodotti:[{categoria:'pizza',nome:'Pizza rossa al taglio',quantita:6},{categoria:'pizza',nome:'Focaccia farcita',quantita:4}],
+     noteOrdine:'Evento aziendale'},
     {id:'ORD-0003',createdAt:Date.now()-7200000,stato:'in_preparazione',
-     cliente:{nome:'Sara Conti',telefono:'389 9988776',email:'',noteCliente:''},
+     cliente:{nome:'Sara Conti',telefono:'389 9988776',noteCliente:''},
      consegna:{tipo:'ritiro',data:offsetDate(todayStr(),2),ora:'09:00',indirizzo:''},
-     prodotti:[{categoria:'catering',nome:'Buffet dolce 30 persone',quantita:1,prezzo:180},{categoria:'pane',nome:'Grissini assortiti',quantita:5,prezzo:4}],
-     pagamento:{totale:200,acconto:100,metodo:'bonifico'},noteOrdine:'Matrimonio – allestimento alle 8:30'}
+     prodotti:[{categoria:'catering',nome:'Buffet dolce 30 persone',quantita:1},{categoria:'pane',nome:'Grissini assortiti',quantita:5}],
+     noteOrdine:'Matrimonio – allestimento alle 8:30'}
   ];
 }
 
@@ -818,7 +803,7 @@ function renderMiniList(id,ordini,icon,msg){
     return`<div class="order-mini" onclick="apriDettaglio('${o.id}')">
       <div class="orario">${o.consegna?.ora||'--:--'}</div>
       <div class="info"><div class="cliente-name">${esc(o.cliente?.nome||'—')}</div><div class="prodotti-short">${esc(ps)||'Nessun prodotto'}</div></div>
-      <div class="right"><div class="totale">${fmtEur(totaleOrdine(o))}</div><div class="tipo-badge">${o.consegna?.tipo==='consegna'?'🚚':'🏪'} ${dl}</div><div style="margin-top:3px">${badgeStato(o.stato)}</div></div>
+      <div class="right"><div class="tipo-badge">${o.consegna?.tipo==='consegna'?'🚚':'🏪'} ${dl}</div><div style="margin-top:3px">${badgeStato(o.stato)}</div></div>
     </div>`;
   }).join('');
 }
@@ -850,7 +835,6 @@ function renderOrdini(){
       <td><div style="font-weight:600">${esc(o.cliente?.nome||'—')}</div><div style="font-size:12px;color:var(--muted)">${esc(o.cliente?.telefono||'')}</div></td>
       <td><div style="font-weight:600">${formatDate(o.consegna?.data)}</div><div style="font-size:12px;color:var(--muted)">${o.consegna?.ora?'🕐 '+o.consegna.ora:''} ${o.consegna?.tipo==='consegna'?'🚚':'🏪'}</div></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap">${pl} ${more}</div></td>
-      <td style="font-weight:700">${fmtEur(totaleOrdine(o))}</td>
       <td>${badgeStato(o.stato)}</td>
       <td><div style="display:flex;gap:6px">
         <button class="btn btn-secondary" style="padding:5px 9px;font-size:12px" onclick="event.stopPropagation();editOrdine('${o.id}')">✏️</button>
@@ -880,30 +864,18 @@ function apriDettaglio(id){
     const lc=i<idx?'done':'';
     return`<div style="display:flex;align-items:center;gap:0"><div style="display:flex;flex-direction:column;align-items:center"><div class="step-dot ${cls}" onclick="quickStato('${s.k}')" title="${s.l}">${s.i}</div><div class="step-label">${s.l}</div></div>${i<steps.length-1?`<div class="step-line ${lc}"></div>`:''}</div>`;
   }).join('');
-  const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,saldo=tot-acc;
   document.getElementById('d-info-grid').innerHTML=`
     <div class="info-block"><div class="label">Tipo</div><div class="value">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
     <div class="info-block"><div class="label">Data</div><div class="value">${formatDate(o.consegna?.data)||'—'}</div></div>
-    <div class="info-block"><div class="label">Ora</div><div class="value">${o.consegna?.ora||'—'}</div></div>
+    <div class="info-block"><div class="label">Ora ${o.consegna?.tipo==='consegna'?'consegna':'ritiro'}</div><div class="value big">${o.consegna?.ora||'—'}</div></div>
     <div class="info-block"><div class="label">Telefono</div><div class="value"><a href="tel:${o.cliente?.telefono}" style="color:var(--primary)">${o.cliente?.telefono||'—'}</a></div></div>
-    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="info-block"><div class="label">Indirizzo</div><div class="value" style="font-size:13px">${esc(o.consegna.indirizzo)}</div></div>`:''}
-    ${o.cliente?.email?`<div class="info-block"><div class="label">Email</div><div class="value" style="font-size:13px">${esc(o.cliente.email)}</div></div>`:''}
-    <div class="info-block"><div class="label">Totale</div><div class="value big">${fmtEur(tot)}</div></div>
-    <div class="info-block"><div class="label">Saldo</div><div class="value" style="color:${saldo>0?'var(--red)':'var(--green)'}">${fmtEur(saldo)}</div></div>`;
+    ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="info-block"><div class="label">Indirizzo</div><div class="value" style="font-size:13px">${esc(o.consegna.indirizzo)}</div></div>`:''}`;
   document.getElementById('d-prodotti').innerHTML=(o.prodotti||[]).map(p=>`<tr>
     <td><span class="badge-cat ${p.categoria}">${catEmoji(p.categoria)} ${catLabel(p.categoria)}</span></td>
     <td style="font-weight:500">${esc(p.nome)}</td>
-    <td style="text-align:center">${p.quantita}</td>
-    <td>${fmtEur(p.prezzo)}</td>
-    <td style="font-weight:700">${fmtEur((p.prezzo||0)*(p.quantita||0))}</td>
+    <td style="text-align:center;font-weight:700">${p.quantita}</td>
     <td style="font-size:13px;color:var(--muted)">${esc(p.noteRiga||'')}</td>
-  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nessun prodotto</td></tr>';
-  document.getElementById('d-totale-calc').textContent=fmtEur((o.prodotti||[]).reduce((s,p)=>s+(p.prezzo||0)*(p.quantita||0),0));
-  document.getElementById('d-pagamento').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
-    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Totale</span><strong>${fmtEur(tot)}</strong></div>
-    <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Acconto</span><span style="color:var(--green)">− ${fmtEur(acc)}</span></div>
-    <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between"><strong>Saldo</strong><strong style="font-size:17px;color:${saldo>0?'var(--red)':'var(--green)'}">${fmtEur(saldo)}</strong></div>
-    <div style="font-size:13px;color:var(--muted)">Metodo: ${metodoLabel(o.pagamento?.metodo)}</div></div>`;
+  </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted)">Nessun prodotto</td></tr>';
   document.getElementById('d-note').textContent=[o.noteOrdine,o.cliente?.noteCliente?'👤 '+o.cliente.noteCliente:''].filter(Boolean).join('\n\n')||'Nessuna nota.';
   const statOpts=[{k:'ricevuto',l:'📥 Ricevuto'},{k:'in_preparazione',l:'🔥 In preparazione'},{k:'pronto',l:'✅ Pronto'},{k:'consegnato',l:'📦 Consegnato'},{k:'annullato',l:'❌ Annullato'}];
   document.getElementById('d-stato-selector').innerHTML=statOpts.map(s=>`<div class="stato-opt ${s.k} ${o.stato===s.k?'selected':''}" onclick="quickStato('${s.k}')">${s.l}</div>`).join('');
@@ -937,31 +909,24 @@ function editOrdine(id){
   resetForm();selectStato(o.stato||'ricevuto');
   document.getElementById('f-nome').value=o.cliente?.nome||'';
   document.getElementById('f-telefono').value=o.cliente?.telefono||'';
-  document.getElementById('f-email').value=o.cliente?.email||'';
   document.getElementById('f-note-cliente').value=o.cliente?.noteCliente||'';
   document.getElementById('f-tipo').value=o.consegna?.tipo||'ritiro';
   document.getElementById('f-data').value=o.consegna?.data||'';
   document.getElementById('f-ora').value=o.consegna?.ora||'';
   document.getElementById('f-indirizzo').value=o.consegna?.indirizzo||'';
   toggleIndirizzo();
-  document.getElementById('f-totale').value=o.pagamento?.totale||'';
-  document.getElementById('f-acconto').value=o.pagamento?.acconto||'';
-  document.getElementById('f-metodo').value=o.pagamento?.metodo||'non specificato';
   document.getElementById('f-note-ordine').value=o.noteOrdine||'';
   document.getElementById('prodottiList').innerHTML='';
   (o.prodotti||[]).forEach(p=>addProdotto(p));
   if(!(o.prodotti||[]).length)addProdotto();
-  calcSaldo();aggiornaPreviewTotale();showPage('form');
+  showPage('form');
 }
 
 function resetForm(){
-  ['f-nome','f-telefono','f-email','f-note-cliente','f-indirizzo','f-totale','f-acconto','f-note-ordine'].forEach(id=>{document.getElementById(id).value='';});
+  ['f-nome','f-telefono','f-note-cliente','f-indirizzo','f-note-ordine'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('f-tipo').value='ritiro';
-  document.getElementById('f-metodo').value='non specificato';
   document.getElementById('f-ora').value='';
   document.getElementById('prodottiList').innerHTML='';
-  document.getElementById('saldoInfo').textContent='';
-  document.getElementById('totalePreview').textContent='€ 0,00';
   toggleIndirizzo();
 }
 
@@ -978,46 +943,24 @@ function addProdotto(data){
   row.className='prodotto-row';row.dataset.pid=id;
   const cat=data?.categoria||'pane';
   row.innerHTML=`
-    <select onchange="aggiornaPreviewTotale()">
+    <select>
       <option value="pane" ${cat==='pane'?'selected':''}>🍞 Pane</option>
+      <option value="torte" ${cat==='torte'?'selected':''}>🎂 Torte</option>
       <option value="pasticceria" ${cat==='pasticceria'?'selected':''}>🍰 Pasticceria</option>
       <option value="pizza" ${cat==='pizza'?'selected':''}>🍕 Pizza</option>
       <option value="catering" ${cat==='catering'?'selected':''}>🎉 Catering</option>
       <option value="altro" ${cat==='altro'?'selected':''}>📦 Altro</option>
     </select>
-    <input type="text" placeholder="Nome prodotto" value="${escAttr(data?.nome||'')}" oninput="aggiornaPreviewTotale()">
-    <input type="number" min="1" value="${data?.quantita||1}" oninput="aggiornaPreviewTotale()">
-    <input type="number" min="0" step="0.01" value="${escAttr(String(data?.prezzo||''))}" placeholder="0,00" oninput="aggiornaPreviewTotale()">
-    <input type="text" disabled style="background:#f5f5f5;color:#888" placeholder="—">
-    <button class="btn-del-prod" onclick="document.querySelector('.prodotto-row[data-pid=\\'${id}\\']').remove();aggiornaPreviewTotale()">✕</button>`;
+    <input type="text" placeholder="Nome prodotto" value="${escAttr(data?.nome||'')}">
+    <input type="number" min="1" value="${data?.quantita||1}">
+    <button class="btn-del-prod" onclick="document.querySelector('.prodotto-row[data-pid=\\'${id}\\']').remove()">✕</button>`;
   document.getElementById('prodottiList').appendChild(row);
-  aggiornaPreviewTotale();
-}
-
-function aggiornaPreviewTotale(){
-  let tot=0;
-  document.querySelectorAll('.prodotto-row').forEach(row=>{
-    const ins=row.querySelectorAll('input,select');
-    const sub=(parseFloat(ins[2].value)||0)*(parseFloat(ins[3].value)||0);
-    tot+=sub;ins[4].value=sub>0?sub.toFixed(2).replace('.',','):'';
-  });
-  document.getElementById('totalePreview').textContent=fmtEur(tot);
-  const ft=document.getElementById('f-totale');
-  if(tot>0&&!ft.value){ft.value=tot.toFixed(2);calcSaldo();}
-}
-
-function calcSaldo(){
-  const tot=parseFloat(document.getElementById('f-totale').value)||0;
-  const acc=parseFloat(document.getElementById('f-acconto').value)||0;
-  const el=document.getElementById('saldoInfo');
-  if(tot>0){el.textContent=`Saldo residuo: ${fmtEur(tot-acc)}`;el.style.color=(tot-acc)>0?'var(--red)':'var(--green)';}
-  else el.textContent='';
 }
 
 function getProdottiFromForm(){
   return Array.from(document.querySelectorAll('.prodotto-row')).map(row=>{
     const ins=row.querySelectorAll('input,select');
-    return{categoria:ins[0].value,nome:ins[1].value.trim(),quantita:parseFloat(ins[2].value)||0,prezzo:parseFloat(ins[3].value)||0};
+    return{categoria:ins[0].value,nome:ins[1].value.trim(),quantita:parseFloat(ins[2].value)||0};
   }).filter(p=>p.nome);
 }
 
@@ -1032,10 +975,9 @@ async function salvaOrdine(){
     createdAt:editId?(loadOrdini().find(o=>o.id===editId)?.createdAt||Date.now()):Date.now(),
     updatedAt:Date.now(),
     stato:document.getElementById('f-stato').value,
-    cliente:{nome,telefono:document.getElementById('f-telefono').value.trim(),email:document.getElementById('f-email').value.trim(),noteCliente:document.getElementById('f-note-cliente').value.trim()},
+    cliente:{nome,telefono:document.getElementById('f-telefono').value.trim(),noteCliente:document.getElementById('f-note-cliente').value.trim()},
     consegna:{tipo:document.getElementById('f-tipo').value,data,ora:document.getElementById('f-ora').value,indirizzo:document.getElementById('f-indirizzo').value.trim()},
     prodotti:getProdottiFromForm(),
-    pagamento:{totale:parseFloat(document.getElementById('f-totale').value)||0,acconto:parseFloat(document.getElementById('f-acconto').value)||0,metodo:document.getElementById('f-metodo').value},
     noteOrdine:document.getElementById('f-note-ordine').value.trim()
   };
   try{
@@ -1111,10 +1053,10 @@ function stampaLista(ordini){
   <style>body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;margin:20px}h1{font-size:16pt;color:#c0622a;margin-bottom:3px}.sub{font-size:9pt;color:#888;margin-bottom:14px}table{width:100%;border-collapse:collapse}thead tr{background:#c0622a;color:#fff}th{padding:8px 9px;text-align:left;font-size:9pt;font-weight:700}td{padding:7px 9px;font-size:9pt;border-bottom:1px solid #e8ddd0;vertical-align:top}tr:nth-child(even)td{background:#fdf8f3}.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8pt;font-weight:700}.ricevuto{background:#dceafa;color:#2a6cc0}.in_preparazione{background:#fdf3e0;color:#8a5c00}.pronto{background:#d8f2e6;color:#2d8a5a}.consegnato{background:#f0f0f0;color:#444}.annullato{background:#fde8e8;color:#c03030}.tot{background:#faeada;font-weight:700}@media print{body{margin:0}}</style></head><body>
   <h1>🍞 Lista Ordini – Forno</h1>
   <div class="sub">Filtro: <strong>${fl}</strong> | Generato: ${new Date().toLocaleString('it-IT')} | Tot. ordini: <strong>${ordini.length}</strong></div>
-  <table><thead><tr><th>ID</th><th>Cliente</th><th>Tel.</th><th>Data</th><th>Ora</th><th>Tipo</th><th>Prodotti</th><th>Totale</th><th>Acconto</th><th>Saldo</th><th>Stato</th><th>Note</th></tr></thead><tbody>
-  ${ordini.map(o=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');
-  return`<tr><td><strong>${o.id}</strong></td><td><strong>${o.cliente?.nome||'—'}</strong>${o.cliente?.noteCliente?'<br><small style="color:#888">'+o.cliente.noteCliente+'</small>':''}</td><td>${o.cliente?.telefono||'—'}</td><td>${formatDate(o.consegna?.data)}</td><td>${o.consegna?.ora||'—'}</td><td>${o.consegna?.tipo==='consegna'?'🚚 Cons.':'🏪 Ritiro'}</td><td>${ps||'—'}</td><td style="font-weight:700">€ ${tot.toFixed(2)}</td><td style="color:#2d8a5a">€ ${acc.toFixed(2)}</td><td style="font-weight:700;color:${s>0?'#c03030':'#2d8a5a'}">€ ${s.toFixed(2)}</td><td><span class="badge ${o.stato}">${statoLabel(o.stato)}</span></td><td style="font-size:8pt;color:#666">${o.noteOrdine||'—'}</td></tr>`;}).join('')}
-  </tbody><tfoot><tr class="tot"><td colspan="7" style="text-align:right">TOTALE (${ordini.length})</td><td>€ ${ordini.reduce((s,o)=>s+totaleOrdine(o),0).toFixed(2)}</td><td>€ ${ordini.reduce((s,o)=>s+(o.pagamento?.acconto||0),0).toFixed(2)}</td><td>€ ${ordini.reduce((s,o)=>s+totaleOrdine(o)-(o.pagamento?.acconto||0),0).toFixed(2)}</td><td colspan="2"></td></tr></tfoot></table>
+  <table><thead><tr><th>ID</th><th>Cliente</th><th>Tel.</th><th>Data</th><th>Ora ritiro</th><th>Tipo</th><th>Prodotti</th><th>Stato</th><th>Note</th></tr></thead><tbody>
+  ${ordini.map(o=>{const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');
+  return`<tr><td><strong>${o.id}</strong></td><td><strong>${o.cliente?.nome||'—'}</strong>${o.cliente?.noteCliente?'<br><small style="color:#888">'+o.cliente.noteCliente+'</small>':''}</td><td>${o.cliente?.telefono||'—'}</td><td>${formatDate(o.consegna?.data)}</td><td style="font-weight:700">${o.consegna?.ora||'—'}</td><td>${o.consegna?.tipo==='consegna'?'🚚 Cons.':'🏪 Ritiro'}</td><td>${ps||'—'}</td><td><span class="badge ${o.stato}">${statoLabel(o.stato)}</span></td><td style="font-size:8pt;color:#666">${o.noteOrdine||'—'}</td></tr>`;}).join('')}
+  </tbody><tfoot><tr class="tot"><td colspan="9" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr></tfoot></table>
   <script>window.onload=()=>window.print();<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
 }
@@ -1123,19 +1065,17 @@ function stampaFogliLavorazione(ordini){
   const stTxt={ricevuto:'Ricevuto',in_preparazione:'In prep.',pronto:'Pronto',consegnato:'Consegnato'};
   const html=`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Fogli Lavorazione</title>
   <style>body{font-family:'Segoe UI',Arial,sans-serif;margin:0}.foglio{padding:24px 28px;page-break-after:always;border:3px solid #c0622a;min-height:96vh;box-sizing:border-box}.foglio:last-child{page-break-after:avoid}.fh{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #c0622a;padding-bottom:12px;margin-bottom:16px}.logo{font-size:20pt;font-weight:900;color:#c0622a}.fid{background:#c0622a;color:#fff;padding:5px 14px;border-radius:7px;font-size:13pt;font-weight:700}.cn{font-size:18pt;font-weight:900;margin-bottom:5px}.tel{font-size:12pt;color:#555;margin-bottom:14px}.strip{display:flex;gap:14px;background:#fdf8f3;border:2px solid #e8ddd0;border-radius:8px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap}.si{display:flex;flex-direction:column}.si .l{font-size:8pt;font-weight:700;text-transform:uppercase;color:#8a6f55;letter-spacing:.5px}.si .v{font-size:12pt;font-weight:700}.si .vb{font-size:15pt!important;color:#c0622a}table{width:100%;border-collapse:collapse;margin-bottom:16px}thead tr{background:#c0622a;color:#fff}th{padding:8px 11px;text-align:left;font-size:10pt}td{padding:9px 11px;font-size:10pt;border-bottom:2px solid #e8ddd0}tr:nth-child(even)td{background:#fdf8f3}.qty{font-size:15pt;font-weight:900;color:#c0622a;text-align:center}.nb{border:2px dashed #e8a44a;border-radius:8px;padding:10px 14px;background:#fdf3e0;margin-bottom:14px}.nb .nt{font-weight:800;margin-bottom:5px;color:#8a5c00}.tl{display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:2px solid #e8ddd0}.ts{flex:1;text-align:center;padding:9px 5px;border:2px solid #e8ddd0;border-radius:7px;font-size:9pt;font-weight:700}.ts.a{background:#c0622a;color:#fff;border-color:#c0622a}.ts.d{background:#d8f2e6;border-color:#2d8a5a;color:#2d8a5a}.fr{display:flex;gap:18px;margin-top:18px}.fb{flex:1;border-bottom:2px solid #555;padding-bottom:28px}.fl{font-size:9pt;color:#888;margin-top:5px}@media print{.foglio{border:3px solid #c0622a!important}}</style></head><body>
-  ${ordini.map(o=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const idx=['ricevuto','in_preparazione','pronto','consegnato'].indexOf(o.stato);const steps=['📥 Ricevuto','🔥 In prep.','✅ Pronto','📦 Consegnato'];
+  ${ordini.map(o=>{const idx=['ricevuto','in_preparazione','pronto','consegnato'].indexOf(o.stato);const steps=['📥 Ricevuto','🔥 In prep.','✅ Pronto','📦 Consegnato'];
   return`<div class="foglio"><div class="fh"><div class="logo">🍞 Forno</div><div class="fid">${o.id}</div></div>
-  <div class="cn">${o.cliente?.nome||'—'}</div><div class="tel">📞 ${o.cliente?.telefono||'—'}${o.cliente?.email?' | ✉️ '+o.cliente.email:''}</div>
+  <div class="cn">${o.cliente?.nome||'—'}</div><div class="tel">📞 ${o.cliente?.telefono||'—'}</div>
   <div class="strip">
     <div class="si"><div class="l">Data</div><div class="v vb">${formatDate(o.consegna?.data)}</div></div>
-    <div class="si"><div class="l">Ora</div><div class="v vb">${o.consegna?.ora||'—'}</div></div>
+    <div class="si"><div class="l">Ora ${o.consegna?.tipo==='consegna'?'consegna':'ritiro'}</div><div class="v vb">${o.consegna?.ora||'—'}</div></div>
     <div class="si"><div class="l">Tipo</div><div class="v">${o.consegna?.tipo==='consegna'?'🚚 Consegna':'🏪 Ritiro'}</div></div>
     ${o.consegna?.tipo==='consegna'&&o.consegna?.indirizzo?`<div class="si"><div class="l">Indirizzo</div><div class="v" style="font-size:10pt">${o.consegna.indirizzo}</div></div>`:''}
-    <div class="si"><div class="l">Totale</div><div class="v" style="color:#c0622a">€ ${tot.toFixed(2)}</div></div>
-    <div class="si"><div class="l">Saldo</div><div class="v" style="color:${s>0?'#c03030':'#2d8a5a'}">€ ${s.toFixed(2)}</div></div>
   </div>
   <table><thead><tr><th>Categoria</th><th>Prodotto</th><th style="text-align:center">Q.tà</th></tr></thead><tbody>
-  ${(o.prodotti||[]).map(p=>`<tr><td>${{pane:'🍞 Pane',pasticceria:'🍰 Pasticceria',pizza:'🍕 Pizza',catering:'🎉 Catering',altro:'📦 Altro'}[p.categoria]||p.categoria}</td><td style="font-weight:700">${p.nome}</td><td class="qty">${p.quantita}</td></tr>`).join('')}
+  ${(o.prodotti||[]).map(p=>`<tr><td>${{pane:'🍞 Pane',torte:'🎂 Torte',pasticceria:'🍰 Pasticceria',pizza:'🍕 Pizza',catering:'🎉 Catering',altro:'📦 Altro'}[p.categoria]||p.categoria}</td><td style="font-weight:700">${p.nome}</td><td class="qty">${p.quantita}</td></tr>`).join('')}
   </tbody></table>
   ${(o.noteOrdine||o.cliente?.noteCliente)?`<div class="nb"><div class="nt">⚠️ NOTE IMPORTANTI</div>${o.cliente?.noteCliente?'<div>Cliente: '+o.cliente.noteCliente+'</div>':''}${o.noteOrdine?'<div>Ordine: '+o.noteOrdine+'</div>':''}</div>`:''}
   <div class="tl">${steps.map((s,i)=>`<div class="ts ${i<idx?'d':i===idx?'a':''}">${s}</div>`).join('')}</div>
@@ -1149,21 +1089,21 @@ function esportaExcel(ordini){
   const fl={tutti:'Tutti',da_fare:'Da preparare',pronto:'Pronti',consegnato:'Evasi',oggi:'Oggi',date:'Intervallo'}[_pfFiltro]||'Tutti';
   const sc={ricevuto:{bg:'#dceafa',fg:'#2a6cc0'},in_preparazione:{bg:'#fdf3e0',fg:'#8a5c00'},pronto:{bg:'#d8f2e6',fg:'#2d8a5a'},consegnato:{bg:'#f0f0f0',fg:'#444'},annullato:{bg:'#fde8e8',fg:'#c03030'}};
   const st={ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'};
-  const ct={pane:'Pane',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'};
+  const ct={pane:'Pane',torte:'Torte',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'};
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-  <head><meta charset="UTF-8"><style>td,th{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;border:1px solid #d4c8b8;padding:7px 9px}.hdr{background:#c0622a;color:#fff;font-weight:700;font-size:11pt}.hdr2{background:#7a3fb5;color:#fff;font-weight:700}.re{background:#fdf8f3}.ev{background:#fff}.tot{background:#faeada;font-weight:700}.ti{font-size:15pt;font-weight:900;color:#c0622a;border:none}.su{font-size:9pt;color:#888;border:none}.num{text-align:right}.ctr{text-align:center}.sp{color:#c03030;font-weight:700}.sn{color:#2d8a5a;font-weight:700}</style></head><body>
+  <head><meta charset="UTF-8"><style>td,th{font-family:'Segoe UI',Arial,sans-serif;font-size:11pt;border:1px solid #d4c8b8;padding:7px 9px}.hdr{background:#c0622a;color:#fff;font-weight:700;font-size:11pt}.hdr2{background:#7a3fb5;color:#fff;font-weight:700}.re{background:#fdf8f3}.ev{background:#fff}.tot{background:#faeada;font-weight:700}.ti{font-size:15pt;font-weight:900;color:#c0622a;border:none}.su{font-size:9pt;color:#888;border:none}.num{text-align:right}.ctr{text-align:center}</style></head><body>
   <table>
-  <tr><td class="ti" colspan="13">🍞 GESTIONALE ORDINI – FORNO</td></tr>
-  <tr><td class="su" colspan="13">Filtro: ${fl} | Generato: ${new Date().toLocaleString('it-IT')} | Ordini: ${ordini.length}</td></tr>
-  <tr><td colspan="13" style="border:none">&nbsp;</td></tr>
-  <tr><td class="hdr">ID</td><td class="hdr">Cliente</td><td class="hdr">Telefono</td><td class="hdr">Email</td><td class="hdr">Data</td><td class="hdr">Ora</td><td class="hdr">Tipo</td><td class="hdr">Prodotti</td><td class="hdr num">Totale €</td><td class="hdr num">Acconto €</td><td class="hdr num">Saldo €</td><td class="hdr ctr">Stato</td><td class="hdr">Note</td></tr>
-  ${ordini.map((o,i)=>{const tot=totaleOrdine(o),acc=o.pagamento?.acconto||0,s=tot-acc;const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');const cls=i%2?'re':'ev';
-  return`<tr><td class="${cls}" style="font-weight:700">${o.id}</td><td class="${cls}" style="font-weight:700">${o.cliente?.nome||'—'}</td><td class="${cls}">${o.cliente?.telefono||'—'}</td><td class="${cls}">${o.cliente?.email||''}</td><td class="${cls}" style="font-weight:700">${formatDate(o.consegna?.data)}</td><td class="${cls} ctr">${o.consegna?.ora||'—'}</td><td class="${cls}">${o.consegna?.tipo==='consegna'?'Consegna':'Ritiro'}</td><td class="${cls}" style="font-size:9pt">${ps||'—'}</td><td class="${cls} num">€ ${tot.toFixed(2)}</td><td class="${cls} num sn">€ ${acc.toFixed(2)}</td><td class="${cls} num ${s>0?'sp':'sn'}">€ ${s.toFixed(2)}</td><td class="${cls} ctr" style="background:${c.bg};color:${c.fg};font-weight:700">${st[o.stato]||o.stato}</td><td class="${cls}" style="font-size:9pt">${o.noteOrdine||''}</td></tr>`;}).join('')}
-  <tr class="tot"><td colspan="8" style="text-align:right">TOTALE (${ordini.length} ordini)</td><td class="num">€ ${ordini.reduce((s,o)=>s+totaleOrdine(o),0).toFixed(2)}</td><td class="num sn">€ ${ordini.reduce((s,o)=>s+(o.pagamento?.acconto||0),0).toFixed(2)}</td><td class="num sp">€ ${ordini.reduce((s,o)=>s+totaleOrdine(o)-(o.pagamento?.acconto||0),0).toFixed(2)}</td><td colspan="2"></td></tr>
+  <tr><td class="ti" colspan="9">🍞 GESTIONALE ORDINI – FORNO</td></tr>
+  <tr><td class="su" colspan="9">Filtro: ${fl} | Generato: ${new Date().toLocaleString('it-IT')} | Ordini: ${ordini.length}</td></tr>
+  <tr><td colspan="9" style="border:none">&nbsp;</td></tr>
+  <tr><td class="hdr">ID</td><td class="hdr">Cliente</td><td class="hdr">Telefono</td><td class="hdr">Data</td><td class="hdr ctr">Ora ritiro</td><td class="hdr">Tipo</td><td class="hdr">Prodotti</td><td class="hdr ctr">Stato</td><td class="hdr">Note</td></tr>
+  ${ordini.map((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const ps=(o.prodotti||[]).map(p=>`${p.quantita}x ${p.nome}`).join(', ');const cls=i%2?'re':'ev';
+  return`<tr><td class="${cls}" style="font-weight:700">${o.id}</td><td class="${cls}" style="font-weight:700">${o.cliente?.nome||'—'}</td><td class="${cls}">${o.cliente?.telefono||'—'}</td><td class="${cls}" style="font-weight:700">${formatDate(o.consegna?.data)}</td><td class="${cls} ctr" style="font-weight:700">${o.consegna?.ora||'—'}</td><td class="${cls}">${o.consegna?.tipo==='consegna'?'Consegna':'Ritiro'}</td><td class="${cls}" style="font-size:9pt">${ps||'—'}</td><td class="${cls} ctr" style="background:${c.bg};color:${c.fg};font-weight:700">${st[o.stato]||o.stato}</td><td class="${cls}" style="font-size:9pt">${o.noteOrdine||''}</td></tr>`;}).join('')}
+  <tr class="tot"><td colspan="9" style="text-align:right">TOTALE ORDINI: ${ordini.length}</td></tr>
   </table><br><br>
   <table><tr><td class="ti" colspan="8">📋 DETTAGLIO PRODOTTI</td></tr><tr><td colspan="8" style="border:none">&nbsp;</td></tr>
-  <tr><td class="hdr2">ID</td><td class="hdr2">Cliente</td><td class="hdr2">Data</td><td class="hdr2">Stato</td><td class="hdr2">Categoria</td><td class="hdr2">Prodotto</td><td class="hdr2 ctr">Q.tà</td><td class="hdr2 num">Subtotale €</td></tr>
-  ${ordini.flatMap((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const cls=i%2?'re':'ev';return(o.prodotti||[]).map((p,j)=>`<tr><td class="${cls}" style="font-weight:700">${j===0?o.id:''}</td><td class="${cls}">${j===0?(o.cliente?.nome||'—'):''}</td><td class="${cls}">${j===0?formatDate(o.consegna?.data):''}</td><td class="${cls}" style="${j===0?'background:'+c.bg+';color:'+c.fg+';font-weight:700':''}">${j===0?(st[o.stato]||o.stato):''}</td><td class="${cls}">${ct[p.categoria]||p.categoria}</td><td class="${cls}" style="font-weight:600">${p.nome}</td><td class="${cls} ctr" style="font-weight:700">${p.quantita}</td><td class="${cls} num" style="font-weight:700">€ ${((p.prezzo||0)*(p.quantita||0)).toFixed(2)}</td></tr>`);}).join('')}
+  <tr><td class="hdr2">ID</td><td class="hdr2">Cliente</td><td class="hdr2">Data</td><td class="hdr2 ctr">Ora ritiro</td><td class="hdr2 ctr">Stato</td><td class="hdr2">Categoria</td><td class="hdr2">Prodotto</td><td class="hdr2 ctr">Q.tà</td></tr>
+  ${ordini.flatMap((o,i)=>{const c=sc[o.stato]||{bg:'#fff',fg:'#000'};const cls=i%2?'re':'ev';return(o.prodotti||[]).map((p,j)=>`<tr><td class="${cls}" style="font-weight:700">${j===0?o.id:''}</td><td class="${cls}">${j===0?(o.cliente?.nome||'—'):''}</td><td class="${cls}">${j===0?formatDate(o.consegna?.data):''}</td><td class="${cls} ctr" style="font-weight:700">${j===0?(o.consegna?.ora||'—'):''}</td><td class="${cls}" style="${j===0?'background:'+c.bg+';color:'+c.fg+';font-weight:700':''}">${j===0?(st[o.stato]||o.stato):''}</td><td class="${cls}">${ct[p.categoria]||p.categoria}</td><td class="${cls}" style="font-weight:600">${p.nome}</td><td class="${cls} ctr" style="font-weight:700">${p.quantita}</td></tr>`);}).join('')}
   </table></body></html>`;
   const blob=new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -1248,15 +1188,12 @@ function todayStr(){return new Date().toISOString().slice(0,10);}
 function offsetDate(base,days){const d=new Date(base);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
 function formatDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
 function formatDateTime(ts){if(!ts)return'—';return new Date(ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
-function fmtEur(n){return'€ '+(n||0).toFixed(2).replace('.',',');}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function escAttr(s){return String(s||'').replace(/"/g,'&quot;');}
-function totaleOrdine(o){const fp=(o.prodotti||[]).reduce((s,p)=>s+(p.prezzo||0)*(p.quantita||0),0);return o.pagamento?.totale||fp;}
 function badgeStato(stato){const map={ricevuto:'📥 Ricevuto',in_preparazione:'🔥 In preparazione',pronto:'✅ Pronto',consegnato:'📦 Consegnato',annullato:'❌ Annullato'};return`<span class="badge-stato ${stato}">${map[stato]||stato}</span>`;}
 function statoLabel(s){return{ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'}[s]||s;}
-function catEmoji(c){return{pane:'🍞',pasticceria:'🍰',pizza:'🍕',catering:'🎉',altro:'📦'}[c]||'📦';}
-function catLabel(c){return{pane:'Pane',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'}[c]||c;}
-function metodoLabel(m){return{contanti:'💵 Contanti',carta:'💳 Carta',bonifico:'🏦 Bonifico',misto:'🔄 Misto','non specificato':'—'}[m]||'—';}
+function catEmoji(c){return{pane:'🍞',torte:'🎂',pasticceria:'🍰',pizza:'🍕',catering:'🎉',altro:'📦'}[c]||'📦';}
+function catLabel(c){return{pane:'Pane',torte:'Torte',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'}[c]||c;}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
 // ═══════════════════════════ INIT ═══════════════════════════
