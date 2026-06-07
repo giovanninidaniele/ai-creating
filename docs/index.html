@@ -7,7 +7,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--bg:#fdf8f3;--surface:#fff;--border:#e8ddd0;--text:#2d1f0e;--muted:#8a6f55;--primary:#c0622a;--ph:#a3501f;--pl:#fae8dc;--accent:#e8a44a;--al:#fdf3e0;--green:#2d8a5a;--gl:#d8f2e6;--blue:#2a6cc0;--bl:#dceafa;--red:#c03030;--rl:#fde8e8;--purple:#7a3fb5;--pul:#eedff8;--r:10px;--sh:0 2px 8px rgba(45,31,14,.10);--shl:0 6px 24px rgba(45,31,14,.14)}
+:root{--bg:#fdfaf0;--surface:#fff;--border:#ece3cc;--text:#3a2f17;--muted:#8f7d52;--primary:#c79412;--ph:#a87c0c;--pl:#fbf2d3;--accent:#f4c430;--al:#fdf6da;--green:#2d8a5a;--gl:#d8f2e6;--blue:#2a6cc0;--bl:#dceafa;--red:#c03030;--rl:#fde8e8;--rose:#c43d72;--rosel:#fce4ee;--purple:#7a3fb5;--pul:#eedff8;--r:10px;--sh:0 2px 8px rgba(58,47,23,.10);--shl:0 6px 24px rgba(58,47,23,.14)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
@@ -43,18 +43,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .loading-text{font-size:14px;color:var(--muted);font-weight:500}
 
 /* TOPBAR */
-.topbar{background:var(--primary);color:#fff;display:flex;align-items:center;gap:12px;padding:0 20px;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-.topbar-logo{font-size:20px;font-weight:700;display:flex;align-items:center;gap:7px}
+.topbar{background:#2e2410;color:#fff;display:flex;align-items:center;gap:12px;padding:0 18px;height:62px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.22);border-bottom:3px solid var(--accent)}
+.topbar-logo{display:flex;align-items:center;gap:9px}
+.topbar-logo svg{display:block;height:44px;width:44px}
+.lg-word{font-family:'Segoe Script','Brush Script MT','Comic Sans MS',cursive;font-size:24px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1}
+.lg-word .lg-accent{color:var(--accent)}
 .topbar-nav{display:flex;gap:4px;margin-left:12px}
-.nav-btn{background:none;border:none;color:rgba(255,255,255,.8);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all .18s}
-.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,.18);color:#fff}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,.78);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all .18s}
+.nav-btn:hover,.nav-btn.active{background:rgba(244,196,48,.22);color:var(--accent)}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.btn-new{background:#fff;color:var(--primary);border:none;padding:7px 15px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
-.btn-new:hover{background:var(--pl)}
+.btn-new{background:var(--accent);color:#3a2f17;border:none;padding:8px 15px;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer;transition:all .18s}
+.btn-new:hover{background:#ffd84d}
 .conn-dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;cursor:help;transition:background .4s;box-shadow:0 0 0 2px rgba(255,255,255,.3);margin-left:4px}
 .conn-dot.offline{background:var(--accent)}
 .settings-btn{background:none;border:none;color:rgba(255,255,255,.75);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;transition:all .18s}
-.settings-btn:hover{background:rgba(255,255,255,.18);color:#fff}
+.settings-btn:hover{background:rgba(244,196,48,.22);color:var(--accent)}
 
 /* BACKUP BANNER */
 .backup-banner{background:var(--al);border-bottom:2px solid var(--accent);padding:10px 22px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500}
@@ -75,9 +78,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .stat-card .sub{font-size:11px;color:var(--muted);margin-top:2px}
 .stat-card.total .value{color:var(--primary)}
 .stat-card.ricevuto .value{color:var(--blue)}
-.stat-card.preparazione .value{color:var(--accent)}
-.stat-card.pronto .value{color:var(--green)}
 .stat-card.consegnato .value{color:var(--muted)}
+.stat-card.forno-stat .value{color:var(--ph)}
+.stat-card.reve-stat .value{color:var(--rose)}
 
 .section-title{font-size:15px;font-weight:700;margin-bottom:13px;display:flex;align-items:center;gap:8px}
 .section-title .badge{background:var(--pl);color:var(--primary);font-size:12px;padding:2px 8px;border-radius:20px;font-weight:600}
@@ -256,7 +259,9 @@ tr.clickable:hover td{background:#fdf5ee;cursor:pointer}
 <!-- SETUP SCREEN -->
 <div id="setupScreen" class="setup-overlay">
   <div class="setup-card">
-    <div class="setup-logo">🍞</div>
+    <div class="setup-logo"><svg viewBox="0 0 120 120" style="width:96px;height:96px"><circle cx="60" cy="60" r="50" fill="none" stroke="#f4c430" stroke-width="11" stroke-linecap="round" stroke-dasharray="270 44" transform="rotate(-35 60 60)"/><g stroke="#3a2f17" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M46 52a12 12 0 0 1 0-18 12 12 0 0 1 28 0 12 12 0 0 1 0 18z"/><path d="M48 52v18h24V52"/><line x1="54" y1="58" x2="54" y2="66"/><line x1="66" y1="58" x2="66" y2="66"/></g></svg></div>
+    <div style="text-align:center;font-family:'Segoe Script','Brush Script MT',cursive;font-size:30px;font-weight:700;color:var(--ph);margin-bottom:2px">e furnèr</div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Forno · Pasticceria</div>
     <h1>Configura il Gestionale Cloud</h1>
     <p class="setup-desc">Collega il gestionale a <strong>Firebase</strong> (gratuito, di Google) per usarlo su tutti i tuoi dispositivi con sincronizzazione automatica.</p>
     <div class="setup-steps">
@@ -324,7 +329,10 @@ service cloud.firestore {
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-logo">🍞🍰 Efurner</div>
+  <div class="topbar-logo">
+    <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="25" fill="none" stroke="#f4c430" stroke-width="6" stroke-linecap="round" stroke-dasharray="135 22" transform="rotate(-35 30 30)"/><g stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 26a6 6 0 0 1 0-9 6 6 0 0 1 14 0 6 6 0 0 1 0 9z"/><path d="M24 26v9h12v-9"/><line x1="27" y1="29" x2="27" y2="33"/><line x1="33" y1="29" x2="33" y2="33"/></g></svg>
+    <span class="lg-word">e&nbsp;furnèr</span>
+  </div>
   <nav class="topbar-nav">
     <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
     <button class="nav-btn" onclick="showPage('ordini')">Ordini</button>
@@ -380,7 +388,7 @@ service cloud.firestore {
     <div class="print-filter-grid" id="pfRepGrid" style="grid-template-columns:1fr 1fr 1fr">
       <div class="pf-option selected" data-rep="" onclick="selectPFRep(this)"><span class="pf-icon">🏬</span><span>Entrambi</span></div>
       <div class="pf-option" data-rep="forno" onclick="selectPFRep(this)"><span class="pf-icon">🍞</span><span>Forno</span></div>
-      <div class="pf-option" data-rep="pasticceria" onclick="selectPFRep(this)"><span class="pf-icon">🍰</span><span>Pasticceria</span></div>
+      <div class="pf-option" data-rep="pasticceria" onclick="selectPFRep(this)"><span class="pf-icon">🍰</span><span>Revé</span></div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">Formato</div>
     <div class="format-row">
@@ -402,10 +410,10 @@ service cloud.firestore {
   <div id="alertImminenti" style="display:none"></div>
   <div class="stat-grid">
     <div class="stat-card total" onclick="showPage('ordini','')"><div class="label">Totale ordini</div><div class="value" id="stat-total">0</div><div class="sub">nel database</div></div>
-    <div class="stat-card ricevuto" onclick="showPage('ordini','ricevuto')"><div class="label">Ricevuti</div><div class="value" id="stat-ricevuto">0</div><div class="sub">da avviare</div></div>
-    <div class="stat-card preparazione" onclick="showPage('ordini','in_preparazione')"><div class="label">In preparazione</div><div class="value" id="stat-preparazione">0</div><div class="sub">in lavorazione</div></div>
-    <div class="stat-card pronto" onclick="showPage('ordini','pronto')"><div class="label">Pronti</div><div class="value" id="stat-pronto">0</div><div class="sub">da consegnare</div></div>
+    <div class="stat-card ricevuto" onclick="showPage('ordini','ricevuto')"><div class="label">Ricevuti</div><div class="value" id="stat-ricevuto">0</div><div class="sub">da preparare</div></div>
     <div class="stat-card consegnato" onclick="showPage('ordini','consegnato')"><div class="label">Consegnati</div><div class="value" id="stat-consegnato">0</div><div class="sub">completati</div></div>
+    <div class="stat-card forno-stat" onclick="filtraReparto('forno')"><div class="label">Forno e furnèr</div><div class="value" id="stat-forno">0</div><div class="sub">ordini attivi</div></div>
+    <div class="stat-card reve-stat" onclick="filtraReparto('pasticceria')"><div class="label">Pasticceria Revé</div><div class="value" id="stat-reve">0</div><div class="sub">ordini attivi</div></div>
   </div>
   <div class="section-title">📅 Ordini di oggi <span class="badge" id="badge-oggi">0</span></div>
   <div class="order-mini-list" id="ordiniOggi"><div class="empty-state"><div class="icon">☀️</div><p>Nessun ordine per oggi.</p></div></div>
@@ -431,14 +439,12 @@ service cloud.firestore {
     <input type="text" id="searchInput" placeholder="🔍 Cerca cliente o ID…" oninput="renderOrdini()">
     <select id="filterReparto" onchange="renderOrdini()">
       <option value="">Tutti i reparti</option>
-      <option value="forno">🍞 Forno Efurner</option>
-      <option value="pasticceria">🍰 Pasticceria Efurner</option>
+      <option value="forno">🍞 Forno e furnèr</option>
+      <option value="pasticceria">🍰 Pasticceria Revé</option>
     </select>
     <select id="filterStato" onchange="renderOrdini()">
       <option value="">Tutti gli stati</option>
       <option value="ricevuto">Ricevuto</option>
-      <option value="in_preparazione">In preparazione</option>
-      <option value="pronto">Pronto</option>
       <option value="consegnato">Consegnato</option>
       <option value="annullato">Annullato</option>
     </select>
@@ -469,8 +475,8 @@ service cloud.firestore {
   <div class="form-card">
     <div class="form-card-title">🏷️ Reparto *</div>
     <div class="reparto-selector" id="repartoSelector">
-      <div class="reparto-opt forno" data-reparto="forno" onclick="selectReparto('forno')">🍞 Forno Efurner</div>
-      <div class="reparto-opt pasticceria" data-reparto="pasticceria" onclick="selectReparto('pasticceria')">🍰 Pasticceria Efurner</div>
+      <div class="reparto-opt forno" data-reparto="forno" onclick="selectReparto('forno')">🍞 Forno e furnèr</div>
+      <div class="reparto-opt pasticceria" data-reparto="pasticceria" onclick="selectReparto('pasticceria')">🍰 Pasticceria Revé</div>
     </div>
     <input type="hidden" id="f-reparto" value="forno">
   </div>
@@ -478,8 +484,6 @@ service cloud.firestore {
     <div class="form-card-title">📋 Stato</div>
     <div class="stato-selector" id="statoSelector">
       <div class="stato-opt ricevuto" data-stato="ricevuto" onclick="selectStato('ricevuto')">📥 Ricevuto</div>
-      <div class="stato-opt in_preparazione" data-stato="in_preparazione" onclick="selectStato('in_preparazione')">🔥 In preparazione</div>
-      <div class="stato-opt pronto" data-stato="pronto" onclick="selectStato('pronto')">✅ Pronto</div>
       <div class="stato-opt consegnato" data-stato="consegnato" onclick="selectStato('consegnato')">📦 Consegnato</div>
       <div class="stato-opt annullato" data-stato="annullato" onclick="selectStato('annullato')">❌ Annullato</div>
     </div>
@@ -498,7 +502,7 @@ service cloud.firestore {
   <div class="form-card">
     <div class="form-card-title">🏪 Ritiro</div>
     <div class="form-row triple">
-      <div class="form-group"><label>Luogo di ritiro *</label><select id="f-luogo"><option value="reve">📍 Reve</option><option value="efurner">📍 Efurner</option></select></div>
+      <div class="form-group"><label>Luogo di ritiro *</label><select id="f-luogo"><option value="reve">📍 Revé</option><option value="efurner">📍 Efurner</option></select></div>
       <div class="form-group"><label>Data *</label><input type="date" id="f-data"></div>
       <div class="form-group"><label>Ora ritiro</label><input type="time" id="f-ora"></div>
     </div>
@@ -793,20 +797,24 @@ function showPage(name,filterStato){
   window.scrollTo(0,0);
 }
 
+function filtraReparto(rep){
+  showPage('ordini','');
+  document.getElementById('filterReparto').value=rep;
+  renderOrdini();
+}
+
 // ═══════════════════════════ DASHBOARD ═══════════════════════════
 function renderDashboard(){
   const ordini=loadOrdini();
   const oggi=todayStr();
   document.getElementById('dashDate').textContent='📅 '+new Date().toLocaleDateString('it-IT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('stat-total').textContent=ordini.length;
-  ['ricevuto','in_preparazione','pronto','consegnato'].forEach(s=>{
-    const id=s==='in_preparazione'?'preparazione':s;
-    document.getElementById('stat-'+id).textContent=ordini.filter(o=>o.stato===s).length;
-  });
-  const pronti=ordini.filter(o=>o.stato==='pronto');
-  const alertDiv=document.getElementById('alertImminenti');
-  if(pronti.length>0){alertDiv.style.display='flex';alertDiv.className='alert-box';alertDiv.innerHTML=`<span>⚠️</span><div class="text"><strong>${pronti.length} ordine${pronti.length>1?'i':''} pronto${pronti.length>1?'i':''}</strong> in attesa di consegna o ritiro.</div>`;}
-  else alertDiv.style.display='none';
+  document.getElementById('stat-ricevuto').textContent=ordini.filter(o=>o.stato==='ricevuto').length;
+  document.getElementById('stat-consegnato').textContent=ordini.filter(o=>o.stato==='consegnato').length;
+  const attivi=ordini.filter(o=>o.stato!=='consegnato'&&o.stato!=='annullato');
+  document.getElementById('stat-forno').textContent=attivi.filter(o=>(o.reparto||'forno')==='forno').length;
+  document.getElementById('stat-reve').textContent=attivi.filter(o=>o.reparto==='pasticceria').length;
+  document.getElementById('alertImminenti').style.display='none';
   const oggi_ordini=ordini.filter(o=>o.consegna?.data===oggi&&o.stato!=='annullato').sort((a,b)=>(a.consegna?.ora||'99:99').localeCompare(b.consegna?.ora||'99:99'));
   document.getElementById('badge-oggi').textContent=oggi_ordini.length;
   renderMiniList('ordiniOggi',oggi_ordini,'☀️','Nessun ordine per oggi.');
@@ -883,7 +891,7 @@ function apriDettaglio(id){
   document.getElementById('d-stato-badge').innerHTML=repartoBadge(o.reparto)+' '+badgeStato(o.stato);
   document.getElementById('d-edit-btn').onclick=()=>editOrdine(id);
   document.getElementById('d-delete-btn').onclick=()=>confirmDelete(id);
-  const steps=[{k:'ricevuto',l:'Ricevuto',i:'📥'},{k:'in_preparazione',l:'Preparazione',i:'🔥'},{k:'pronto',l:'Pronto',i:'✅'},{k:'consegnato',l:'Consegnato',i:'📦'}];
+  const steps=[{k:'ricevuto',l:'Ricevuto',i:'📥'},{k:'consegnato',l:'Consegnato',i:'📦'}];
   const idx=steps.findIndex(s=>s.k===o.stato);
   document.getElementById('timelineContainer').innerHTML=steps.map((s,i)=>{
     const cls=i<idx?'done':o.stato===s.k?'current':'';
@@ -903,7 +911,7 @@ function apriDettaglio(id){
     <td style="font-size:13px;color:var(--muted)">${esc(p.noteRiga||'')}</td>
   </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted)">Nessun prodotto</td></tr>';
   document.getElementById('d-note').textContent=[o.noteOrdine,o.cliente?.noteCliente?'👤 '+o.cliente.noteCliente:''].filter(Boolean).join('\n\n')||'Nessuna nota.';
-  const statOpts=[{k:'ricevuto',l:'📥 Ricevuto'},{k:'in_preparazione',l:'🔥 In preparazione'},{k:'pronto',l:'✅ Pronto'},{k:'consegnato',l:'📦 Consegnato'},{k:'annullato',l:'❌ Annullato'}];
+  const statOpts=[{k:'ricevuto',l:'📥 Ricevuto'},{k:'consegnato',l:'📦 Consegnato'},{k:'annullato',l:'❌ Annullato'}];
   document.getElementById('d-stato-selector').innerHTML=statOpts.map(s=>`<div class="stato-opt ${s.k} ${o.stato===s.k?'selected':''}" onclick="quickStato('${s.k}')">${s.l}</div>`).join('');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-dettaglio').classList.add('active');
@@ -963,13 +971,41 @@ function selectReparto(reparto){
   document.querySelectorAll('#repartoSelector .reparto-opt').forEach(el=>el.classList.toggle('selected',el.dataset.reparto===reparto));
 }
 
+// ── Descrizioni prodotti predefinite (registrabili) ───────────────────────────
+const PRESET_KEY='forno_preset_prodotti_v1';
+const DEFAULT_PRESETS={
+  pane:['Pane casereccio 1kg','Pane di farro','Pane integrale','Filone di semola','Ciabatta','Michette (10 pz)','Grissini assortiti','Focaccia bianca'],
+  torte:['Torta di compleanno cioccolato','Torta di compleanno panna e fragole','Crostata di frutta','Cheesecake','Tiramisù','Torta sacher','Millefoglie','Torta nuziale'],
+  pasticceria:['Cannoli siciliani','Bignè alla crema','Cornetti (12 pz)','Pasticcini misti (kg)','Babà','Sfogliatelle','Cassatine','Macarons (scatola)'],
+  pizza:['Pizza rossa al taglio','Pizza margherita al taglio','Focaccia farcita','Pizza bianca','Teglia mista'],
+  catering:['Buffet dolce 30 persone','Buffet salato 30 persone','Vassoio rustici (50 pz)','Tramezzini assortiti (kg)','Aperitivo finger food'],
+  altro:['Confezione regalo','Colomba','Panettone artigianale','Uovo di Pasqua']
+};
+
+function loadCustomPresets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY))||{};}catch{return{};}}
+function getPresets(cat){
+  const custom=loadCustomPresets()[cat]||[];
+  const def=DEFAULT_PRESETS[cat]||[];
+  return Array.from(new Set([...custom,...def])).sort((a,b)=>a.localeCompare(b,'it'));
+}
+function registerPresets(prodotti){
+  const store=loadCustomPresets();let changed=false;
+  (prodotti||[]).forEach(p=>{
+    if(!p.nome)return;
+    const def=DEFAULT_PRESETS[p.categoria]||[];
+    const cur=store[p.categoria]||[];
+    if(!def.includes(p.nome)&&!cur.includes(p.nome)){cur.push(p.nome);store[p.categoria]=cur;changed=true;}
+  });
+  if(changed){try{localStorage.setItem(PRESET_KEY,JSON.stringify(store));}catch(e){}}
+}
+
 function addProdotto(data){
   const id=++_prodottoId;
   const row=document.createElement('div');
   row.className='prodotto-row';row.dataset.pid=id;
   const cat=data?.categoria||'pane';
   row.innerHTML=`
-    <select>
+    <select onchange="updateRowDatalist(this)">
       <option value="pane" ${cat==='pane'?'selected':''}>🍞 Pane</option>
       <option value="torte" ${cat==='torte'?'selected':''}>🎂 Torte</option>
       <option value="pasticceria" ${cat==='pasticceria'?'selected':''}>🍰 Pasticceria</option>
@@ -977,10 +1013,21 @@ function addProdotto(data){
       <option value="catering" ${cat==='catering'?'selected':''}>🎉 Catering</option>
       <option value="altro" ${cat==='altro'?'selected':''}>📦 Altro</option>
     </select>
-    <input type="text" placeholder="Nome prodotto" value="${escAttr(data?.nome||'')}">
+    <input type="text" placeholder="Scrivi o scegli una descrizione…" value="${escAttr(data?.nome||'')}" list="dl-${id}" autocomplete="off">
+    <datalist id="dl-${id}">${presetOptions(cat)}</datalist>
     <input type="number" min="1" value="${data?.quantita||1}">
     <button class="btn-del-prod" onclick="document.querySelector('.prodotto-row[data-pid=\\'${id}\\']').remove()">✕</button>`;
   document.getElementById('prodottiList').appendChild(row);
+}
+
+function updateRowDatalist(sel){
+  const row=sel.closest('.prodotto-row');
+  const dl=row.querySelector('datalist');
+  if(dl)dl.innerHTML=presetOptions(sel.value);
+}
+
+function presetOptions(cat){
+  return getPresets(cat).map(n=>`<option value="${escAttr(n)}">`).join('');
 }
 
 function getProdottiFromForm(){
@@ -1008,6 +1055,7 @@ async function salvaOrdine(){
     noteOrdine:document.getElementById('f-note-ordine').value.trim()
   };
   try{
+    registerPresets(ordine.prodotti);
     await salvaOrdineCloud(ordine);
     showToast(editId?'Ordine aggiornato ✓':'Ordine salvato ✓','success');
     showPage('ordini');
@@ -1057,13 +1105,13 @@ function selectFmt(fmt){
 
 function pfFiltroLabel(){
   const base={tutti:'Tutti gli ordini',domani:'Da preparare — Domani',dopodomani:'Da preparare — Dopodomani'}[_pfFiltro]||'Tutti';
-  const rep=_pfRep?(' · '+(_pfRep==='pasticceria'?'Pasticceria':'Forno')):'';
+  const rep=_pfRep?(' · '+(_pfRep==='pasticceria'?'Revé':'Forno')):'';
   return base+rep;
 }
 
 function getOrdiniPerOutput(){
   const oggi=todayStr();
-  const daPreparare=o=>o.stato==='ricevuto'||o.stato==='in_preparazione';
+  const daPreparare=o=>o.stato!=='consegnato'&&o.stato!=='annullato';
   let ordini=loadOrdini();
   if(_pfFiltro==='domani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,1)&&daPreparare(o));
   else if(_pfFiltro==='dopodomani')ordini=ordini.filter(o=>o.consegna?.data===offsetDate(oggi,2)&&daPreparare(o));
@@ -1226,10 +1274,10 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function escAttr(s){return String(s||'').replace(/"/g,'&quot;');}
 function badgeStato(stato){const map={ricevuto:'📥 Ricevuto',in_preparazione:'🔥 In preparazione',pronto:'✅ Pronto',consegnato:'📦 Consegnato',annullato:'❌ Annullato'};return`<span class="badge-stato ${stato}">${map[stato]||stato}</span>`;}
 function statoLabel(s){return{ricevuto:'Ricevuto',in_preparazione:'In preparazione',pronto:'Pronto',consegnato:'Consegnato',annullato:'Annullato'}[s]||s;}
-function repartoLabel(r){return{forno:'Forno Efurner',pasticceria:'Pasticceria Efurner'}[r]||'Forno Efurner';}
+function repartoLabel(r){return{forno:'Forno e furnèr',pasticceria:'Pasticceria Revé'}[r]||'Forno e furnèr';}
 function repartoEmoji(r){return r==='pasticceria'?'🍰':'🍞';}
-function repartoBadge(r){r=r||'forno';return`<span class="badge-reparto ${r}">${repartoEmoji(r)} ${r==='pasticceria'?'Pasticceria':'Forno'}</span>`;}
-function luogoLabel(l){return{reve:'Reve',efurner:'Efurner'}[l]||'Reve';}
+function repartoBadge(r){r=r||'forno';return`<span class="badge-reparto ${r}">${repartoEmoji(r)} ${r==='pasticceria'?'Revé':'Forno'}</span>`;}
+function luogoLabel(l){return{reve:'Revé',efurner:'Efurner'}[l]||'Revé';}
 function catEmoji(c){return{pane:'🍞',torte:'🎂',pasticceria:'🍰',pizza:'🍕',catering:'🎉',altro:'📦'}[c]||'📦';}
 function catLabel(c){return{pane:'Pane',torte:'Torte',pasticceria:'Pasticceria',pizza:'Pizza',catering:'Catering',altro:'Altro'}[c]||c;}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
